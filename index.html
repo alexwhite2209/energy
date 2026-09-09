@@ -779,8 +779,20 @@ footer{border-top:1px solid var(--line);padding:var(--sp-5) 0 var(--sp-4);positi
    ПОРТРЕТНЫЙ ГЕРОЙ. Кадр вертикальный, поэтому текст садится
    вниз, над рейкой, а затемнение идёт снизу вверх.
    ============================================================ */
+/* --k интерполируется, поэтому вход текста можно анимировать
+   переходом, а не прокруткой. Без поддержки просто прыгает. */
+@property --k{syntax:"<number>";initial-value:0;inherits:true}
+
 @media (max-width:900px){
-  .hero{height:1100vh}
+  /* Телефон листает такты свайпом, поэтому герой ровно в экран,
+     а не в одиннадцать. Длинная прокрутка тут не нужна. */
+  .hero{height:100svh}
+  .hero.beats .stage{position:relative;height:100svh}
+  .hero.beats .band{transition:opacity .45s var(--e-soft),--k .6s var(--e-out)}
+  .hero.beats .plate{transition:opacity .45s var(--e-soft),--k .6s var(--e-out)}
+  .hero.beats .rail-fill,.hero.beats .rail-dot{transition:width .6s var(--e-out),left .6s var(--e-out)}
+  /* подсказка про свайп вместо «листайте» */
+  .hero.beats .cue{bottom:150px}
   .band{align-content:end;padding:88px 20px 21vh}
   .band-in{max-width:100%}
   .band.right .band-in{margin-left:0;text-align:left}
@@ -1557,8 +1569,8 @@ var SOURCES = {
      только на лёгкой: мелкий кадр дешевле декодировать, и перемотка
      на нём перестаёт спотыкаться. */
   desktop: {
-    lite:   { url:"assets/hero-lite.mp4",     bytes:4444817  },
-    full:   { url:"assets/hero-scrub.mp4",    bytes:18520074 },
+    lite:   { url:"assets/hero-lite.mp4",     bytes:4994881  },
+    full:   { url:"assets/hero-scrub.mp4",    bytes:21694896 },
     poster: "assets/hero-poster.jpg"
   },
   mobile: {
@@ -1887,8 +1899,18 @@ function attach(el, url){
   return new Promise(function(res, rej){
     el.addEventListener("canplay", function(){ res(); }, { once:true });
     el.addEventListener("error", function(){ rej(new Error("decode")); }, { once:true });
+    el.preload = "auto";
     el.src = url; el.load();
   });
+}
+
+/* Сколько ролика уже в буфере. Нужно, чтобы честно показывать
+   догрузку, пока посетитель уже смотрит начало. */
+function bufferedFrac(el){
+  try{
+    if (!el.duration || !el.buffered.length) return 0;
+    return Math.min(1, el.buffered.end(el.buffered.length - 1) / el.duration);
+  }catch(e){ return 0; }
 }
 
 /* прогрев декодера: первый скролл не упирается в холодный декод */
@@ -1911,6 +1933,7 @@ function upgradeTo(url){
     vidHd.addEventListener("seeked", function(){
       video = vidHd;
       stage.classList.add("hd");
+      if (vload) vload.classList.add("gone");
       if (liteUrl){ URL.revokeObjectURL(liteUrl); liteUrl = null; }
       seekBusy = false; pendingTime = null;
       onScroll();
@@ -1929,18 +1952,32 @@ function initHeroOnce(){
   var started = false;
   function go(){
     if (started) return; started = true;
-    fetchBlob(src.lite, function(f){ netFrac = f; showLoad(f); })
-      .then(function(url){
-        liteUrl = url;
-        return attach(vidLite, url);
-      })
-      .then(function(){
-        warmDecoder();
-        requestSeek(heroProgress() * video.duration);
-        stage.classList.add("video-ready");
+    /* Лёгкая ступень играет прямо с адреса: браузер отдаёт первые
+       кадры, не дожидаясь конца файла, и продолжает докачивать
+       фоном. Ждать целиком, как раньше, больше не нужно. */
+    function onProg(){
+      var f = bufferedFrac(vidLite);
+      netFrac = f; showLoad(f);
+      if (f >= 0.999){
+        vidLite.removeEventListener("progress", onProg);
         if (vload) vload.classList.add("gone");
+      }
+    }
+    vidLite.addEventListener("progress", onProg);
+    vidLite.addEventListener("canplaythrough", onProg);
+    /* последнее событие буфера может не прийти, поэтому счётчик
+       снимаем ещё и по времени: страница к этому моменту уже работает */
+    setTimeout(function(){ if (vload) vload.classList.add("gone"); }, 12000);
+
+    attach(vidLite, src.lite.url)
+      .then(function(){
+        if (beatsOn){ try { video.currentTime = STOPS[beatI] * video.duration; } catch(e){} }
+        else { warmDecoder(); requestSeek(heroProgress() * video.duration); }
+        stage.classList.add("video-ready");
         onScroll();
-        /* полная ступень едет сзади и только на большом экране */
+        onProg();
+        /* Полная ступень едет Blob'ом сзади и только на большом экране:
+           когда она целиком в памяти, любая перемотка мгновенна. */
         if (src.full) fetchBlob(src.full, null).then(upgradeTo).catch(function(){});
       })
       .catch(failVideo);
@@ -1979,10 +2016,163 @@ function disableScrub(){
   window.removeEventListener("scroll", onScroll);
   if (rafId !== null){ cancelAnimationFrame(rafId); rafId = null; }
 }
-function applyHeroMode(){
-  if (MQLS.some(function(m){ return m.matches; })) disableScrub();
-  else enableScrub();
+/* ═══════════════════════════════════════════════════════════
+   РЕЖИМ ТАКТОВ ДЛЯ ТЕЛЕФОНА.
+   Один свайп ведёт ролик от такта к такту и останавливает точно
+   на нём. Вперёд видео ПРОИГРЫВАЕТСЯ, а не перематывается: для
+   декодера это штатный режим, поэтому картинка не дёргается.
+   Назад проигрывать нельзя, поэтому там короткая обратная
+   перемотка по всё-интра файлу, где каждый кадр опорный.
+   ═══════════════════════════════════════════════════════════ */
+var beatsOn = false, beatI = 0, beatBusy = false, beatRaf = null, STOPS = [];
+
+function buildStops(){
+  STOPS = BANDS.map(function(b){ return (b.a + b.b) / 2; });
 }
+
+function paintBeat(i){
+  for (var n=0;n<BANDS.length;n++){
+    var b = BANDS[n], on = n === i;
+    b.el.style.opacity = on ? "1" : "0";
+    b.el.style.setProperty("--k", on ? "1" : "0");
+    b.op = on ? 1 : 0; b.k = on ? 1 : 0;
+    if (on){
+      for (var c=0;c<b.counters.length;c++){
+        var el = b.counters[c];
+        el.textContent = el.getAttribute("data-count") + (el.getAttribute("data-suffix") || "");
+      }
+    }
+  }
+  var p = STOPS[i];
+  rail.classList.toggle("dim", !!BANDS[i].plate);
+  railFill.style.setProperty("--p", p.toFixed(4));
+  railDot.style.setProperty("--p", p.toFixed(4));
+  var st = CONFIG.steps[0], si = 0;
+  for (var k=0;k<CONFIG.steps.length;k++) if (p >= CONFIG.steps[k].at){ st = CONFIG.steps[k]; si = k; }
+  railObj.textContent = st.obj; railPrice.textContent = st.price;
+  for (var t=0;t<railTicks.length;t++) railTicks[t].classList.toggle("on", t === si - 1);
+  if (cue) cue.classList.toggle("gone", i > 0);
+}
+
+function stopBeatRaf(){ if (beatRaf){ cancelAnimationFrame(beatRaf); beatRaf = null; } }
+
+/* Вперёд: проигрываем отрезок и тормозим ровно на такте.
+   Скорость подбираем так, чтобы любой отрезок занял около секунды.
+   Останов держим на трёх независимых опорах: покадровый колбэк
+   видео, кадры страницы и таймер. Если браузер придушит кадры,
+   в фоне или в энергосбережении, ролик всё равно встанет где надо. */
+function playForward(to, done){
+  if (!video.duration){ done(); return; }
+  var target = to * video.duration;
+  var span = Math.max(0.05, target - video.currentTime);
+  var rate = Math.min(4, Math.max(1, span / 1.05));
+  video.playbackRate = rate;
+  var el = video, fired = false, timer = null, vfc = null;
+
+  function finish(){
+    if (fired) return; fired = true;
+    if (timer) clearTimeout(timer);
+    stopBeatRaf();
+    el.pause(); el.playbackRate = 1;
+    try { el.currentTime = target; } catch(e){}
+    el.removeEventListener("timeupdate", tick);
+    done();
+  }
+  function tick(){ if (el.currentTime >= target - 0.012) finish(); }
+
+  el.addEventListener("timeupdate", tick);
+  timer = setTimeout(finish, (span / rate) * 1000 + 700);   // предохранитель
+
+  var p = el.play();
+  if (p && p.catch) p.catch(function(){ finish(); });
+
+  if (el.requestVideoFrameCallback){
+    (function frame(){
+      if (fired) return;
+      if (el.currentTime >= target - 0.012){ finish(); return; }
+      vfc = el.requestVideoFrameCallback(frame);
+    })();
+  }
+  (function watch(){
+    if (fired) return;
+    if (el.currentTime >= target - 0.012){ finish(); return; }
+    beatRaf = requestAnimationFrame(watch);
+  })();
+}
+
+/* Назад: короткая обратная перемотка. Файл всё-интра, поэтому
+   каждый шаг попадает мгновенно и ход выходит ровным. */
+function seekTo(to, done){
+  if (!video.duration){ done(); return; }
+  var from = video.currentTime, target = to * video.duration;
+  var t0 = performance.now(), DUR = 620;
+  (function step(now){
+    var t = clamp((now - t0)/DUR, 0, 1);
+    var e = 1 - Math.pow(1 - t, 3);
+    try { video.currentTime = from + (target - from) * e; } catch(err){}
+    if (t < 1){ beatRaf = requestAnimationFrame(step); }
+    else { beatRaf = null; done(); }
+  })(t0);
+}
+
+function goBeat(i){
+  if (beatBusy) return false;
+  if (i < 0 || i >= STOPS.length) return false;
+  var back = i < beatI;
+  beatI = i; beatBusy = true;
+  paintBeat(i);
+  stopBeatRaf();
+  var fin = function(){ beatBusy = false; };
+  if (back) seekTo(STOPS[i], fin); else playForward(STOPS[i], fin);
+  return true;
+}
+
+var tY = 0, tActive = false;
+function onTouchStart(e){
+  if (e.touches.length !== 1) return;
+  tY = e.touches[0].clientY; tActive = true;
+}
+function onTouchMove(e){
+  if (!tActive || e.touches.length !== 1) return;
+  var dy = tY - e.touches[0].clientY;
+  if (Math.abs(dy) < 34) return;
+  var last = beatI >= STOPS.length - 1, first = beatI <= 0;
+  /* На краях историю не держим: палец уходит в обычную прокрутку */
+  if ((dy > 0 && last) || (dy < 0 && first)) { tActive = false; return; }
+  e.preventDefault();
+  tActive = false;
+  goBeat(beatI + (dy > 0 ? 1 : -1));
+}
+function onTouchEnd(){ tActive = false; }
+
+function enableBeats(){
+  if (beatsOn) return; beatsOn = true;
+  buildStops();
+  hero.classList.add("beats");
+  initHeroOnce();
+  beatI = 0; paintBeat(0);
+  stage.addEventListener("touchstart", onTouchStart, { passive:true });
+  stage.addEventListener("touchmove",  onTouchMove,  { passive:false });
+  stage.addEventListener("touchend",   onTouchEnd,   { passive:true });
+  if (cue) cue.firstChild.textContent = "Свайп";
+}
+function disableBeats(){
+  if (!beatsOn) return; beatsOn = false;
+  hero.classList.remove("beats");
+  stopBeatRaf(); beatBusy = false;
+  video.pause(); video.playbackRate = 1;
+  stage.removeEventListener("touchstart", onTouchStart);
+  stage.removeEventListener("touchmove",  onTouchMove);
+  stage.removeEventListener("touchend",   onTouchEnd);
+  if (cue) cue.firstChild.textContent = "Листайте";
+}
+
+function applyHeroMode(){
+  if (MQLS.some(function(m){ return m.matches; })){ disableScrub(); disableBeats(); return; }
+  if (MOBILE_SRC_MQ.matches){ disableScrub(); enableBeats(); }
+  else { disableBeats(); enableScrub(); }
+}
+MOBILE_SRC_MQ.addEventListener("change", applyHeroMode);
 MQLS.forEach(function(m){ m.addEventListener("change", applyHeroMode); });
 
 /* ═══════════════════════════════════════════════════════════
