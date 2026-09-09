@@ -35,7 +35,12 @@
   --maxw:1240px;
 }
 *{box-sizing:border-box}
-html,body{overflow-x:hidden;overflow-x:clip}
+/* Отсечка по горизонтали живёт ТОЛЬКО на html и оттуда распространяется
+   на область просмотра. Если поставить её ещё и на body, скроллером
+   становится body, а не область просмотра, и window.scrollTo уходит
+   в пустоту. Именно hidden, а не clip: clip у корня вовсе отменяет
+   прокрутку страницы. */
+html{overflow-x:hidden}
 html{scroll-behavior:smooth}
 body{
   margin:0;background:var(--bg);color:var(--ink);
@@ -376,30 +381,6 @@ h2.sec-t{font-size:clamp(30px,4.2vw,58px);text-transform:uppercase;letter-spacin
 .stat i{display:block;font-style:normal;margin-top:14px;color:var(--ink-2);font-size:15px;line-height:1.45}
 @media (max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:520px){.stats{grid-template-columns:1fr}}
-
-/* --- КАК РАБОТАЕМ: линия прочерчивается по скроллу --- */
-.flow{position:relative}
-.flow-line{position:absolute;left:0;right:0;top:46px;height:2px;overflow:hidden;z-index:0}
-.flow-line span{display:block;height:100%;width:calc(var(--d,0) * 100%);
-  background:linear-gradient(90deg,var(--blue-dim),var(--blue) 40%,var(--amber));
-  box-shadow:0 0 12px rgba(37,151,240,.55)}
-.steps{position:relative;z-index:1;display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-3)}
-.step{padding-top:0}
-.step-dot{width:14px;height:14px;border-radius:50%;background:var(--bg);
-  border:2px solid var(--line-strong);margin:40px 0 26px;position:relative;
-  transition:border-color .5s var(--e-soft),box-shadow .5s var(--e-soft),background .5s}
-.step.lit .step-dot{border-color:var(--blue);background:var(--blue);
-  box-shadow:0 0 0 5px rgba(37,151,240,.16),0 0 20px rgba(37,151,240,.7)}
-.step em{font-style:normal;font-family:"JetBrains Mono",monospace;font-size:10.5px;
-  letter-spacing:.2em;color:var(--ink-3)}
-.step h3{margin-top:10px;font-size:20px;text-transform:uppercase;letter-spacing:-.01em}
-.step p{margin-top:12px;color:var(--ink-2);font-size:15px;line-height:1.6}
-@media (max-width:880px){
-  .steps{grid-template-columns:1fr 1fr;gap:var(--sp-4)}
-  .flow-line{display:none}
-  .step-dot{margin-top:0}
-}
-@media (max-width:520px){.steps{grid-template-columns:1fr}}
 
 /* --- ПОЧЕМУ: упругая гармошка. Панель раскрывается под курсором,
        соседние ужимаются в вертикальные корешки.
@@ -791,7 +772,8 @@ footer{border-top:1px solid var(--line);padding:var(--sp-5) 0 var(--sp-4);positi
   :root{ --navh:58px; --frame:56.25vw; }
 
   .hero{height:100svh}
-  .hero.beats .stage{position:relative;height:100svh;background:var(--bg);overflow:visible}
+  .hero.beats .stage{position:relative;height:100svh;background:var(--bg);overflow:visible;
+    touch-action:none}
 
   /* сам кадр */
   .hero.beats .stage video,
@@ -842,9 +824,6 @@ footer{border-top:1px solid var(--line);padding:var(--sp-5) 0 var(--sp-4);positi
   .hero.beats .band,.hero.beats .plate{transition:opacity .45s var(--e-soft),--k .6s var(--e-out)}
   .hero.beats .rail-fill,.hero.beats .rail-dot{transition:width .6s var(--e-out),left .6s var(--e-out)}
 
-  /* Четыре шага на телефоне занимают целый экран и тормозят путь
-     к заявке, поэтому там их не показываем. */
-  #flow{display:none}
 }
 
 @media (max-width:900px) and (min-height:780px){
@@ -864,8 +843,6 @@ footer{border-top:1px solid var(--line);padding:var(--sp-5) 0 var(--sp-4);positi
 
 /* Четыре шага на телефоне занимают целый экран и тормозят путь
    к заявке, поэтому там их не показываем. */
-@media (max-width:900px){ #flow{display:none} }
-
 @media (pointer:coarse){
   .btn,.hold-btn{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
   .q summary{padding-top:22px;padding-bottom:22px}
@@ -889,8 +866,6 @@ footer{border-top:1px solid var(--line);padding:var(--sp-5) 0 var(--sp-4);positi
   .stg > *{transition-delay:0s !important}
   .nav{transform:translateY(0)}
   .cue{display:none}
-  .flow-line span{width:100% !important}
-  .step-dot{border-color:var(--blue);background:var(--blue)}
   .loader{display:none !important}
 }
 body.paused *,body.paused *::before,body.paused *::after{animation-play-state:paused !important}
@@ -924,7 +899,6 @@ body.paused *,body.paused *::before,body.paused *::after{animation-play-state:pa
     <b>Воробьевский<br>Синдикат<i>Электромонтаж</i></b>
   </a>
   <div class="nav-links">
-    <a href="#flow">Как работаем</a>
     <a href="#calc">Расчёт</a>
     <a href="#why">Почему мы</a>
     <a href="#works">Объекты</a>
@@ -1106,29 +1080,6 @@ body.paused *,body.paused *::before,body.paused *::after{animation-play-state:pa
       <div class="stat rv" style="--i:1"><b class="tnum" data-count="12">0</b><i>лет на объектах области</i></div>
       <div class="stat rv" style="--i:2"><b class="tnum" data-count="5">0</b><i>бригад работает одновременно</i></div>
       <div class="stat rv" style="--i:3"><b>24/7</b><i>выезд на аварию</i></div>
-    </div>
-  </div>
-</section>
-
-<!-- КАК РАБОТАЕМ -->
-<section id="flow" class="flow">
-  <div class="wrap">
-    <div class="sec-head">
-      <div class="kicker mono rv">Как работаем</div>
-      <h2 class="sec-t rv">Четыре шага, и ни одного сюрприза</h2>
-    </div>
-    <div style="position:relative">
-      <div class="flow-line" id="flowLine" aria-hidden="true"><span></span></div>
-      <div class="steps">
-        <div class="step rv" data-step="0"><div class="step-dot"></div><em>Шаг 01</em><h3>Замер</h3>
-          <p>Приезжаем на объект, смотрим щит и считаем точки. Бесплатно и ни к чему не обязывает.</p></div>
-        <div class="step rv" data-step="1"><div class="step-dot"></div><em>Шаг 02</em><h3>Проект и смета</h3>
-          <p>Однолинейная схема, план розеток и света, смета по позициям. Видно, за что вы платите.</p></div>
-        <div class="step rv" data-step="2"><div class="step-dot"></div><em>Шаг 03</em><h3>Монтаж</h3>
-          <p>Своя бригада и свой инструмент. Фотоотчёт скрытых работ до того, как стены закроют.</p></div>
-        <div class="step rv" data-step="3"><div class="step-dot"></div><em>Шаг 04</em><h3>Сдача</h3>
-          <p>Протоколы замеров, паспорт щита, гарантия. Пакет документов, который примет надзор.</p></div>
-      </div>
     </div>
   </div>
 </section>
@@ -1556,7 +1507,7 @@ body.paused *,body.paused *::before,body.paused *::after{animation-play-state:pa
         <b>Воробьевский Синдикат<i>Электромонтаж</i></b>
       </div>
       <div class="foot-col"><b>Разделы</b>
-        <a href="#flow">Как работаем</a><br><a href="#calc">Расчёт</a><br>
+        <a href="#calc">Расчёт</a><br>
         <a href="#why">Почему мы</a><br><a href="#works">Объекты</a><br><a href="#faq">Вопросы</a>
       </div>
       <div class="foot-col"><b>Документы</b>
@@ -1608,8 +1559,8 @@ var SOURCES = {
      только на лёгкой: мелкий кадр дешевле декодировать, и перемотка
      на нём перестаёт спотыкаться. */
   desktop: {
-    lite:   { url:"assets/hero-lite.mp4",     bytes:4994881  },
-    full:   { url:"assets/hero-scrub.mp4",    bytes:21694896 },
+    lite:   { url:"assets/hero-lite.mp4",     bytes:2755578  },
+    full:   { url:"assets/hero-scrub.mp4",    bytes:12176799 },
     poster: "assets/hero-poster.jpg"
   },
   mobile: {
@@ -2067,7 +2018,8 @@ function disableScrub(){
    Назад проигрывать нельзя, поэтому там короткая обратная
    перемотка по всё-интра файлу, где каждый кадр опорный.
    ═══════════════════════════════════════════════════════════ */
-var beatsOn = false, beatI = 0, beatBusy = false, beatRaf = null, STOPS = [];
+var beatsOn = false, beatI = 0, beatRaf = null, STOPS = [];
+var cancelMove = null;            // сносит текущий переход, если пришёл новый
 
 function buildStops(){
   STOPS = BANDS.map(function(b){ return (b.a + b.b) / 2; });
@@ -2108,14 +2060,19 @@ function playForward(to, done){
   if (!video.duration){ done(); return; }
   var target = to * video.duration;
   var span = Math.max(0.05, target - video.currentTime);
-  var rate = Math.min(4, Math.max(1, span / 1.05));
+  var rate = Math.min(4.5, Math.max(1, span / 0.85));
   video.playbackRate = rate;
-  var el = video, fired = false, timer = null, vfc = null;
+  var el = video, fired = false, timer = null;
+  /* Прерывание НЕ останавливает ролик. Если дёргать pause и play
+     подряд, они гасят друг друга, и при быстрых свайпах видео встаёт.
+     Новый переход просто переставит цель и скорость. */
+  cancelMove = function(){ fired = true; if (timer) clearTimeout(timer);
+    el.removeEventListener("timeupdate", tick); };
 
   function finish(){
     if (fired) return; fired = true;
     if (timer) clearTimeout(timer);
-    stopBeatRaf();
+    stopBeatRaf(); cancelMove = null;
     el.pause(); el.playbackRate = 1;
     try { el.currentTime = target; } catch(e){}
     el.removeEventListener("timeupdate", tick);
@@ -2126,8 +2083,10 @@ function playForward(to, done){
   el.addEventListener("timeupdate", tick);
   timer = setTimeout(finish, (span / rate) * 1000 + 700);   // предохранитель
 
-  var p = el.play();
-  if (p && p.catch) p.catch(function(){ finish(); });
+  if (el.paused){
+    var pr = el.play();
+    if (pr && pr.catch) pr.catch(function(){ finish(); });
+  }
 
   if (el.requestVideoFrameCallback){
     (function frame(){
@@ -2148,45 +2107,82 @@ function playForward(to, done){
 function seekTo(to, done){
   if (!video.duration){ done(); return; }
   var from = video.currentTime, target = to * video.duration;
-  var t0 = performance.now(), DUR = 620;
+  video.pause(); video.playbackRate = 1;
+  var t0 = performance.now(), DUR = 560, dead = false;
+  cancelMove = function(){ dead = true; };
+  var guard = setTimeout(function(){
+    if (dead) return;
+    try { video.currentTime = target; } catch(e){}
+    stopBeatRaf(); cancelMove = null; done();
+  }, DUR + 500);                    // предохранитель, если кадры придушены
   (function step(now){
+    if (dead){ clearTimeout(guard); return; }
     var t = clamp((now - t0)/DUR, 0, 1);
     var e = 1 - Math.pow(1 - t, 3);
     try { video.currentTime = from + (target - from) * e; } catch(err){}
     if (t < 1){ beatRaf = requestAnimationFrame(step); }
-    else { beatRaf = null; done(); }
+    else { clearTimeout(guard); beatRaf = null; cancelMove = null; done(); }
   })(t0);
 }
 
+/* Свайп во время перехода не теряется: сносим текущий и уходим
+   к новому такту от той точки, где сейчас находимся. */
 function goBeat(i){
-  if (beatBusy) return false;
-  if (i < 0 || i >= STOPS.length) return false;
+  if (i < 0 || i >= STOPS.length || i === beatI) return false;
   var back = i < beatI;
-  beatI = i; beatBusy = true;
+  beatI = i;
   paintBeat(i);
+  if (cancelMove){ cancelMove(); cancelMove = null; }
   stopBeatRaf();
-  var fin = function(){ beatBusy = false; };
+  var fin = function(){};
   if (back) seekTo(STOPS[i], fin); else playForward(STOPS[i], fin);
   return true;
 }
 
-var tY = 0, tActive = false;
+var tY = 0, tActive = false, tDone = false;
+
+/* Перехватываем только когда герой стоит ровно в экране. Если страница
+   прокручена и виден кусок, палец должен работать как обычно. */
+function heroPinned(){
+  var r = hero.getBoundingClientRect();
+  return r.top > -24 && r.top < 24;
+}
 function onTouchStart(e){
   if (e.touches.length !== 1) return;
-  tY = e.touches[0].clientY; tActive = true;
+  tY = e.touches[0].clientY;
+  tActive = heroPinned();
+  tDone = false;
 }
 function onTouchMove(e){
   if (!tActive || e.touches.length !== 1) return;
+  /* Останавливаем прокрутку с ПЕРВОГО движения. Если ждать порога,
+     браузер успеет начать свой скролл, и забрать его назад уже нельзя. */
+  if (e.cancelable) e.preventDefault();
+  if (tDone) return;
   var dy = tY - e.touches[0].clientY;
-  if (Math.abs(dy) < 34) return;
-  var last = beatI >= STOPS.length - 1, first = beatI <= 0;
-  /* На краях историю не держим: палец уходит в обычную прокрутку */
-  if ((dy > 0 && last) || (dy < 0 && first)) { tActive = false; return; }
-  e.preventDefault();
-  tActive = false;
-  goBeat(beatI + (dy > 0 ? 1 : -1));
+  if (Math.abs(dy) < 24) return;
+  tDone = true;
+  var up = dy > 0, last = beatI >= STOPS.length - 1;
+  if (up && last){ tActive = false; leaveHero(); return; }
+  if (!up && beatI <= 0){ return; }
+  goBeat(beatI + (up ? 1 : -1));
 }
-function onTouchEnd(){ tActive = false; }
+function onTouchEnd(){ tActive = false; tDone = false; }
+
+/* История кончилась: уводим страницу дальше сами, чтобы посетитель
+   не упёрся в блокированный экран. */
+function leaveHero(){
+  var soft = reduceMQ.matches ? "auto" : "smooth";
+  var y0 = window.scrollY || 0;
+  window.scrollTo({ top: hero.offsetHeight, left: 0, behavior: soft });
+  /* Запасной путь: на части движков прокрутка окна игнорируется,
+     но прокрутка к элементу работает. Проверяем и добираем. */
+  setTimeout(function(){
+    if (Math.abs((window.scrollY || 0) - y0) > 24) return;
+    var t = document.getElementById("main");
+    if (t) t.scrollIntoView({ behavior: soft, block: "start" });
+  }, 260);
+}
 
 function enableBeats(){
   if (beatsOn) return; beatsOn = true;
@@ -2202,7 +2198,8 @@ function enableBeats(){
 function disableBeats(){
   if (!beatsOn) return; beatsOn = false;
   hero.classList.remove("beats");
-  stopBeatRaf(); beatBusy = false;
+  stopBeatRaf();
+  if (cancelMove){ cancelMove(); cancelMove = null; }
   video.pause(); video.playbackRate = 1;
   stage.removeEventListener("touchstart", onTouchStart);
   stage.removeEventListener("touchmove",  onTouchMove);
