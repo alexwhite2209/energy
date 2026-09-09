@@ -2088,11 +2088,13 @@ function playForward(to, done){
     if (pr && pr.catch) pr.catch(function(){ finish(); });
   }
 
+  /* Покадровый колбэк видео: самая точная из трёх опор останова.
+     Отменять его не нужно, выход держит флаг fired. */
   if (el.requestVideoFrameCallback){
     (function frame(){
       if (fired) return;
       if (el.currentTime >= target - 0.012){ finish(); return; }
-      vfc = el.requestVideoFrameCallback(frame);
+      el.requestVideoFrameCallback(frame);
     })();
   }
   (function watch(){
@@ -2260,22 +2262,6 @@ if (statsSec && "IntersectionObserver" in window){
 }
 
 /* --- линия «как работаем» прочерчивается по скроллу --- */
-var flowLine = document.getElementById("flowLine");
-var flowSpan = flowLine ? flowLine.querySelector("span") : null;
-var stepEls = [].slice.call(document.querySelectorAll(".step"));
-var flowSec = document.getElementById("flow");
-var lastD = -1, flowPinned = false;
-
-function drawFlow(){
-  if (!flowSec || !flowSpan || flowPinned) return;
-  var r = flowSec.getBoundingClientRect(), vh = window.innerHeight;
-  var d = clamp((vh*0.78 - r.top) / (r.height*0.62), 0, 1);
-  if (Math.abs(d - lastD) < 0.006) return;
-  lastD = d;
-  flowSpan.style.setProperty("--d", d.toFixed(3));
-  for (var i=0;i<stepEls.length;i++) stepEls[i].classList.toggle("lit", d > (i*0.235 + 0.06));
-}
-
 /* --- один живой элемент на секцию: пауза за экраном --- */
 document.addEventListener("visibilitychange", function(){
   document.body.classList.toggle("paused", document.hidden);
@@ -2741,9 +2727,6 @@ if (form){
    СНИЖЕННОЕ ДВИЖЕНИЕ, ЖИВЬЁМ И В ОБЕ СТОРОНЫ.
    ═══════════════════════════════════════════════════════════ */
 function pinToFinalStates(){
-  flowPinned = true;
-  if (flowSpan) flowSpan.style.setProperty("--d","1");
-  stepEls.forEach(function(s){ s.classList.add("lit"); });
   document.querySelectorAll("[data-count]").forEach(function(c){
     c.textContent = c.getAttribute("data-count") + (c.getAttribute("data-suffix")||"");
   });
@@ -2752,9 +2735,6 @@ function pinToFinalStates(){
   if (rafId !== null){ cancelAnimationFrame(rafId); rafId = null; }
 }
 function unpinFinalStates(){
-  flowPinned = false; lastD = -1;
-  stepEls.forEach(function(s){ s.classList.remove("lit"); });
-  drawFlow();
 }
 reduceMQ.addEventListener("change", function(e){
   if (e.matches) pinToFinalStates();
@@ -2774,7 +2754,6 @@ function onPageScroll(){
     var y = window.scrollY || window.pageYOffset;
     nav.classList.toggle("solid", y > 80);
     if (!nav.classList.contains("in") && (loaderDone || y > 40)) nav.classList.add("in");
-    drawFlow();
     /* Состояние сети пересчитывается и здесь. Наблюдатель за героем
        срабатывает один раз и может успеть до того, как холст объявлен,
        и тогда сеть не запустится вовсе. */
@@ -2790,7 +2769,6 @@ window.addEventListener("resize", function(){ lastD = -1; onPageScroll(); if (sc
 applyHeroMode();
 runLoader();
 onPageScroll();
-drawFlow();
 /* отложенно: к этому моменту наблюдатель за героем уже отчитался,
    и heroOnScreen отражает правду, а не стартовое значение */
 setTimeout(syncFx, 0);
