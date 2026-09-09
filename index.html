@@ -162,6 +162,10 @@ img{max-width:100%;display:block}
 .stage video{opacity:0;transition:opacity .7s var(--e-soft);will-change:transform;transform:translateZ(0)}
 .stage.video-ready video{opacity:1}
 .stage.video-ready .poster{opacity:0}
+/* полная ступень лежит поверх лёгкой и проявляется, когда догрузилась */
+.stage .v-hd{opacity:0}
+.stage.hd .v-hd{opacity:1}
+.stage.hd .v-lite{opacity:0}
 .scrim{position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(ellipse 120% 90% at 50% 45%,rgba(8,10,16,0) 34%,rgba(8,10,16,.64) 100%)}
 .vig{position:absolute;inset:0;pointer-events:none;
@@ -807,6 +811,10 @@ footer{border-top:1px solid var(--line);padding:var(--sp-5) 0 var(--sp-4);positi
   .nav-logo b i{font-size:8.5px;letter-spacing:.2em}
 }
 
+/* Четыре шага на телефоне занимают целый экран и тормозят путь
+   к заявке, поэтому там их не показываем. */
+@media (max-width:900px){ #flow{display:none} }
+
 @media (pointer:coarse){
   .btn,.hold-btn{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
   .q summary{padding-top:22px;padding-bottom:22px}
@@ -881,7 +889,8 @@ body.paused *,body.paused *::before,body.paused *::after{animation-play-state:pa
 <section class="hero" id="hero" aria-label="Электромонтаж от квартиры до завода">
   <div class="stage" id="stage">
     <div class="poster" id="poster" aria-hidden="true"></div>
-    <video id="hero-video" preload="none" muted playsinline aria-hidden="true" tabindex="-1"></video>
+    <video id="hero-video" class="v-lite" preload="none" muted playsinline aria-hidden="true" tabindex="-1"></video>
+    <video id="hero-video-hd" class="v-hd" preload="none" muted playsinline aria-hidden="true" tabindex="-1"></video>
     <div class="scrim" aria-hidden="true"></div>
     <div class="vig" aria-hidden="true"></div>
 
@@ -1543,8 +1552,20 @@ var CONFIG = {
    портрет, кадр не режется, и весит вдвое меньше горизонтального.
    Размеры в байтах это запасной вариант, когда сервер не отдаёт длину. */
 var SOURCES = {
-  desktop: { url:"assets/hero-scrub.mp4",   bytes:26820179, poster:"assets/hero-poster.jpg"   },
-  mobile:  { url:"assets/hero-scrub-m.mp4", bytes:7221235, poster:"assets/hero-poster-m.jpg" }
+  /* Две ступени. Лёгкая приезжает первой и сразу крутится под скроллом,
+     полная догружается сзади и подменяется незаметно. Телефон живёт
+     только на лёгкой: мелкий кадр дешевле декодировать, и перемотка
+     на нём перестаёт спотыкаться. */
+  desktop: {
+    lite:   { url:"assets/hero-lite.mp4",     bytes:4444817  },
+    full:   { url:"assets/hero-scrub.mp4",    bytes:18520074 },
+    poster: "assets/hero-poster.jpg"
+  },
+  mobile: {
+    lite:   { url:"assets/hero-scrub-m.mp4",  bytes:4982485  },
+    full:   null,
+    poster: "assets/hero-poster-m.jpg"
+  }
 };
 
 /* --- подстановка контактов --- */
@@ -1635,7 +1656,9 @@ BANDS.forEach(function(b){
 
 var hero   = document.getElementById("hero");
 var stage  = document.getElementById("stage");
-var video  = document.getElementById("hero-video");
+var vidLite = document.getElementById("hero-video");
+var vidHd   = document.getElementById("hero-video-hd");
+var video   = vidLite;            // активный элемент, меняется при подмене
 var poster = document.getElementById("poster");
 var rail   = document.getElementById("rail");
 var railObj = document.getElementById("railObj");
@@ -1702,24 +1725,34 @@ function updateCaptions(p){
    ощущается ровно как рывки.
    ═══════════════════════════════════════════════════════════ */
 var seekBusy = false, pendingTime = null;
+var FRAME = 1/30;                  // короче кадра перематывать незачем
+/* Мобильный ролик кодирован так, что каждый кадр опорный: перемотка
+   попадает мгновенно. Но гнаться за долями кадра всё равно незачем. */
+var SEEK_MIN = matchMedia("(pointer:coarse)").matches ? FRAME * 1.6 : FRAME * 0.9;
 function requestSeek(t){
   if (!video.duration) return;
+  if (Math.abs(t - video.currentTime) < SEEK_MIN) return;
   if (seekBusy){ pendingTime = t; return; }
   seekBusy = true;
   try { video.currentTime = t; } catch(e){ seekBusy = false; }
 }
-video.addEventListener("seeked", function(){
+function onSeeked(){
   seekBusy = false;
   if (pendingTime !== null){ var t = pendingTime; pendingTime = null; requestSeek(t); }
-});
-video.addEventListener("error", function(){ seekBusy = false; pendingTime = null; failVideo(); });
+}
+function onVidError(){ seekBusy = false; pendingTime = null; failVideo(); }
+vidLite.addEventListener("seeked", onSeeked);
+vidHd.addEventListener("seeked", onSeeked);
+vidLite.addEventListener("error", onVidError);
 
 /* ═══════════════════════════════════════════════════════════
    ЦИКЛ СГЛАЖИВАНИЯ. Засыпает, когда догнал цель или когда
    герой ушёл с экрана.
    ═══════════════════════════════════════════════════════════ */
 var target = 0, shown = 0, rafId = null, lastTick = 0, heroOnScreen = true;
-var SMOOTH = 0.135;   // подобрано на живой странице: ниже, значит тяжелее ход
+/* На пальце догоняем цель быстрее: меньше промежуточных перемоток,
+   а значит меньше работы декодеру телефона. */
+var SMOOTH = matchMedia("(pointer:coarse)").matches ? 0.24 : 0.135;
 
 function tick(now){
   var dt = Math.min(100, now - (lastTick || now));
@@ -1814,14 +1847,8 @@ function failVideo(){
   netFrac = 1;
 }
 
-/* Телефон получает свой вертикальный ролик: он снят под портрет,
-   поэтому кадр не режется, и весит заметно меньше горизонтального. */
 var MOBILE_SRC_MQ = matchMedia("(max-width:900px),(orientation:portrait) and (pointer:coarse)");
-function pickSource(){
-  return MOBILE_SRC_MQ.matches
-    ? { url: SOURCES.mobile.url,  bytes: SOURCES.mobile.bytes,  poster: SOURCES.mobile.poster }
-    : { url: SOURCES.desktop.url, bytes: SOURCES.desktop.bytes, poster: SOURCES.desktop.poster };
-}
+function pickSource(){ return MOBILE_SRC_MQ.matches ? SOURCES.mobile : SOURCES.desktop; }
 
 function showLoad(frac){
   if (!vloadPct) return;
@@ -1829,12 +1856,14 @@ function showLoad(frac){
   if (vloadPct.textContent !== s) vloadPct.textContent = s;
 }
 
-function loadHeroBlob(src){
+/* Тянем файл потоком и отдаём Blob. Сторожевой таймер рвёт зависшую
+   загрузку, чтобы страница не ждала её вечно. */
+function fetchBlob(tier, onProgress){
   var ctrl = new AbortController();
   var watchdog = setTimeout(function(){ ctrl.abort(); }, 25000);
-  return fetch(src.url, { priority:"low", signal: ctrl.signal }).then(function(res){
+  return fetch(tier.url, { priority:"low", signal: ctrl.signal }).then(function(res){
     if (!res.ok) throw new Error("http " + res.status);
-    var total = Number(res.headers.get("Content-Length")) || src.bytes;
+    var total = Number(res.headers.get("Content-Length")) || tier.bytes;
     var reader = res.body.getReader(), chunks = [], got = 0, lastAt = 0;
     return (function pump(){
       return reader.read().then(function(r){
@@ -1843,28 +1872,29 @@ function loadHeroBlob(src){
         watchdog = setTimeout(function(){ ctrl.abort(); }, 25000);
         chunks.push(r.value); got += r.value.length;
         var frac = Math.min(1, got/total), now = performance.now();
-        if (now - lastAt > 100 || frac === 1){ lastAt = now; netFrac = frac; showLoad(frac); }
+        if (onProgress && (now - lastAt > 100 || frac === 1)){ lastAt = now; onProgress(frac); }
         return pump();
       });
     })().then(function(){
-      clearTimeout(watchdog); netFrac = 1; showLoad(1);
-      video.src = URL.createObjectURL(new Blob(chunks, {type:"video/mp4"}));
-      video.load();
-      video.addEventListener("canplay", function(){
-        warmDecoder();
-        requestSeek(heroProgress() * video.duration);
-        stage.classList.add("video-ready");
-        if (vload) vload.classList.add("gone");
-        onScroll();
-      }, { once:true });
+      clearTimeout(watchdog);
+      if (onProgress) onProgress(1);
+      return URL.createObjectURL(new Blob(chunks, {type:"video/mp4"}));
     });
+  });
+}
+
+function attach(el, url){
+  return new Promise(function(res, rej){
+    el.addEventListener("canplay", function(){ res(); }, { once:true });
+    el.addEventListener("error", function(){ rej(new Error("decode")); }, { once:true });
+    el.src = url; el.load();
   });
 }
 
 /* прогрев декодера: первый скролл не упирается в холодный декод */
 function warmDecoder(){
   if (!video.duration) return;
-  var pts = [0.2, 0.45, 0.7, 0.92], i = 0;
+  var pts = [0.25, 0.6, 0.9], i = 0;
   (function next(){
     if (i >= pts.length){ requestSeek(heroProgress()*video.duration); return; }
     var once = function(){ video.removeEventListener("seeked", once); i++; next(); };
@@ -1873,13 +1903,48 @@ function warmDecoder(){
   })();
 }
 
+/* Подмена ступени: полную наводим на тот же момент, ждём готовый кадр
+   и только потом показываем. Иначе в стык виден скачок. */
+function upgradeTo(url){
+  var at = video.currentTime;
+  attach(vidHd, url).then(function(){
+    vidHd.addEventListener("seeked", function(){
+      video = vidHd;
+      stage.classList.add("hd");
+      if (liteUrl){ URL.revokeObjectURL(liteUrl); liteUrl = null; }
+      seekBusy = false; pendingTime = null;
+      onScroll();
+    }, { once:true });
+    try { vidHd.currentTime = at; } catch(e){}
+  }).catch(function(){ /* полная не взлетела, остаёмся на лёгкой */ });
+}
+
+var liteUrl = null;
+
 function initHeroOnce(){
   if (videoStarted) return; videoStarted = true;
   willLoadVideo = true;
   var src = pickSource();
   poster.style.backgroundImage = "url('" + src.poster + "')";
   var started = false;
-  function go(){ if (started) return; started = true; loadHeroBlob(src).catch(failVideo); }
+  function go(){
+    if (started) return; started = true;
+    fetchBlob(src.lite, function(f){ netFrac = f; showLoad(f); })
+      .then(function(url){
+        liteUrl = url;
+        return attach(vidLite, url);
+      })
+      .then(function(){
+        warmDecoder();
+        requestSeek(heroProgress() * video.duration);
+        stage.classList.add("video-ready");
+        if (vload) vload.classList.add("gone");
+        onScroll();
+        /* полная ступень едет сзади и только на большом экране */
+        if (src.full) fetchBlob(src.full, null).then(upgradeTo).catch(function(){});
+      })
+      .catch(failVideo);
+  }
   var img = new Image();
   img.onload = go; img.onerror = go; img.src = src.poster;
   setTimeout(go, 4000);
