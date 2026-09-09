@@ -684,30 +684,17 @@ input[type=range]:focus-visible{outline:2px solid var(--blue-hi);outline-offset:
   font-size:10px;letter-spacing:.18em;margin-bottom:5px}
 .contact b{font-family:Onest;font-weight:700;font-size:19px}
 .contact a:hover b{color:var(--blue-hi)}
-form{border:1px solid var(--line);border-radius:18px;padding:var(--sp-4);background:rgba(15,19,26,.72);
-  backdrop-filter:blur(8px)}
-.f-row{display:grid;gap:8px;margin-bottom:20px}
-.f-row label{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.16em;
-  text-transform:uppercase;color:var(--ink-3)}
-.f-row input,.f-row select,.f-row textarea{
-  width:100%;background:rgba(8,10,15,.7);border:1px solid var(--line);border-radius:10px;
-  padding:14px 15px;color:var(--ink);font-family:inherit;font-size:16px;
-  transition:border-color .3s var(--e-soft),background .3s}
-.f-row textarea{resize:vertical;min-height:88px}
-.f-row input:focus,.f-row select:focus,.f-row textarea:focus{
-  border-color:var(--blue);background:rgba(8,10,15,.95);outline:none}
-.f-row .hint{color:var(--ink-3);font-size:12.5px}
-.f-err{color:#FF8A7A;font-size:13px;min-height:0}
-.f-row.bad input{border-color:#FF8A7A}
-form .btn-1{width:100%}
-.f-note{margin-top:16px;color:var(--ink-3);font-size:12.5px;line-height:1.55}
-.f-ok{display:none;text-align:center;padding:var(--sp-4) var(--sp-2)}
-.f-ok.on{display:block}
-.f-ok svg{width:52px;height:52px;color:var(--blue);margin:0 auto var(--sp-3)}
-.f-ok h3{font-size:23px;text-transform:uppercase}
-.f-ok p{margin-top:12px;color:var(--ink-2)}
-form.sent .f-body{display:none}
-@media (max-width:900px){.final-grid{grid-template-columns:1fr;gap:var(--sp-5)}}
+.cta-card{border:1px solid var(--line);border-radius:20px;padding:var(--sp-5) var(--sp-4);
+  background:linear-gradient(165deg,rgba(16,21,29,.92),rgba(10,13,19,.92));
+  backdrop-filter:blur(10px)}
+.cta-card h3{margin-top:14px;font-size:clamp(24px,2.7vw,34px);text-transform:uppercase;letter-spacing:-.025em}
+.cta-lede{margin-top:16px;color:var(--ink-2);font-size:16.5px;line-height:1.6;max-width:42ch}
+.cta-big{margin-top:var(--sp-4);display:grid;gap:12px}
+.cta-b{width:100%;padding:19px 26px;font-size:17px;gap:12px}
+.cta-b svg{width:20px;height:20px;flex:0 0 auto}
+.cta-note{margin-top:18px;color:var(--ink-3);font-size:13px;line-height:1.55}
+@media (min-width:560px){.cta-big{grid-template-columns:1fr 1fr}}
+@media (max-width:900px){.cta-card{padding:var(--sp-4) var(--sp-3)}}
 
 /* --- ПОДВАЛ --- */
 footer{border-top:1px solid var(--line);padding:var(--sp-5) 0 var(--sp-4);position:relative;z-index:2;background:transparent}
@@ -1363,7 +1350,7 @@ body.paused *,body.paused *::before,body.paused *::after{animation-play-state:pa
         </div>
 
         <div class="res-cta">
-          <button class="btn btn-1" type="button" id="calcSend">Отправить расчёт в заявку</button>
+          <button class="btn btn-1" type="button" id="calcSend">Отправить расчёт на почту</button>
           <a class="btn btn-2" href="tel:+79990000000" data-tel>+7 999 000-00-00</a>
         </div>
         <p class="res-note">Вилка построена на наших действующих расценках и зависит от состояния объекта, материалов и высоты потолков. После замера цифра фиксируется договором и дальше не растёт.</p>
@@ -1451,9 +1438,9 @@ body.paused *,body.paused *::before,body.paused *::after{animation-play-state:pa
   <div class="wrap">
     <div class="final-grid">
       <div>
-        <div class="kicker mono rv">Оставить заявку</div>
+        <div class="kicker mono rv">Связаться</div>
         <h2 class="rv">Замер бесплатный</h2>
-        <p class="sec-lede rv">Оставьте номер, перезвоним в течение рабочего часа и договоримся о времени. Или позвоните сами, это быстрее.</p>
+        <p class="sec-lede rv">Позвоните или напишите, и договоримся о времени замера. Отвечаем в рабочий час.</p>
         <div class="contacts rv">
           <div class="contact">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/></svg>
@@ -1470,40 +1457,22 @@ body.paused *,body.paused *::before,body.paused *::after{animation-play-state:pa
         </div>
       </div>
 
-      <form id="leadForm" class="rv" novalidate>
-        <div class="f-body">
-          <div class="f-row">
-            <label for="fname">Как к вам обращаться</label>
-            <input id="fname" name="name" type="text" autocomplete="name" required>
-            <div class="f-err" id="err-name"></div>
-          </div>
-          <div class="f-row">
-            <label for="fphone">Телефон</label>
-            <input id="fphone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 ___ ___-__-__" required>
-            <div class="f-err" id="err-phone"></div>
-          </div>
-          <div class="f-row">
-            <label for="fobj">Объект</label>
-            <select id="fobj" name="object">
-              <option>Квартира</option><option>Частный дом</option>
-              <option>Офис, магазин, склад</option><option>Производство</option>
-              <option>Завод, сети</option><option>Пока не определился</option>
-            </select>
-          </div>
-          <div class="f-row">
-            <label for="fmsg">Что нужно сделать</label>
-            <textarea id="fmsg" name="message" placeholder="Площадь, сроки, что уже сделано"></textarea>
-            <div class="hint">Необязательно, но так посчитаем точнее.</div>
-          </div>
-          <button class="btn btn-1" type="submit">Отправить заявку</button>
-          <p class="f-note">Нажимая кнопку, вы соглашаетесь на обработку персональных данных. Письмо откроется в вашей почтовой программе.</p>
+      <div class="cta-card rv">
+        <span class="calc-lbl">Как связаться</span>
+        <h3>Замер и смета бесплатно</h3>
+        <p class="cta-lede">Позвоните или напишите. Ответим в рабочий час, приедем на объект и посчитаем по факту.</p>
+        <div class="cta-big">
+          <a class="btn btn-1 cta-b" href="tel:+79056699971" data-tel-btn>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/></svg>
+            <span>Позвонить</span>
+          </a>
+          <a class="btn btn-2 cta-b" href="mailto:electroprofi.nn@yandex.ru" data-mail-btn>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
+            <span>Написать на почту</span>
+          </a>
         </div>
-        <div class="f-ok" id="formOk" role="status">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg>
-          <h3>Письмо готово</h3>
-          <p>Мы открыли вашу почтовую программу с заполненным письмом. Отправьте его, и мы перезвоним в течение рабочего часа.</p>
-        </div>
-      </form>
+        <p class="cta-note">Ни форм, ни анкет. Мы не собираем ваши данные: вы сами решаете, звонить или писать.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -1589,6 +1558,10 @@ var SOURCES = {
   for (i=0;i<a.length;i++){ a[i].href = "tel:"+CONFIG.phoneHref; a[i].querySelector("b").textContent = CONFIG.phone; }
   a = document.querySelectorAll("[data-mail]");
   for (i=0;i<a.length;i++){ a[i].href = "mailto:"+CONFIG.email; a[i].textContent = CONFIG.email; }
+  a = document.querySelectorAll("[data-tel-btn]");
+  for (i=0;i<a.length;i++) a[i].href = "tel:"+CONFIG.phoneHref;
+  a = document.querySelectorAll("[data-mail-btn]");
+  for (i=0;i<a.length;i++) a[i].href = "mailto:"+CONFIG.email;
   a = document.querySelectorAll("[data-mail-block]");
   for (i=0;i<a.length;i++){ a[i].href = "mailto:"+CONFIG.email; a[i].querySelector("b").textContent = CONFIG.email; }
   /* пока ссылки на карточку нет, кнопка не притворяется рабочей */
@@ -2709,63 +2682,24 @@ if (calcEl){
   });
   areaNum.addEventListener("blur", function(){ recalc(true); });
 
-  /* расчёт уезжает в форму заявки: посетитель не переписывает цифры руками */
+  /* Расчёт уезжает письмом: посетитель ничего не переписывает руками,
+     а мы не заводим форму и не собираем его данные. */
   document.getElementById("calcSend").addEventListener("click", function(){
-    var s = calcEl.__state; if (!s) return;
-    var sel = document.getElementById("fobj");
-    var want = { "Квартира":"Квартира", "Дом":"Частный дом", "Офис":"Офис, магазин, склад",
-                 "Цех":"Производство", "Завод":"Завод, сети" }[s.obj];
-    for (var i=0;i<sel.options.length;i++) if (sel.options[i].text === want) sel.selectedIndex = i;
-    document.getElementById("fmsg").value =
-      s.obj + ", " + s.area + " м². Расчёт с сайта: от " + money(s.lo) + " до " + money(s.hi) +
-      (s.extras.length ? ". Дополнительно: " + s.extras.join(", ") : "") + ".";
-    document.getElementById("final").scrollIntoView({ behavior: reduceMQ.matches ? "auto" : "smooth", block:"start" });
-    setTimeout(function(){ document.getElementById("fname").focus(); }, reduceMQ.matches ? 0 : 700);
+    var st = calcEl.__state; if (!st) return;
+    var body =
+      "Здравствуйте! Посчитал на сайте:\n\n" +
+      "Объект: " + st.obj + "\n" +
+      "Площадь: " + st.area + " м²\n" +
+      "Расчёт: от " + money(st.lo) + " до " + money(st.hi) + "\n" +
+      (st.extras.length ? "Дополнительно: " + st.extras.join(", ") + "\n" : "") +
+      "\nПрошу связаться со мной по поводу замера.";
+    window.location.href = "mailto:" + CONFIG.email +
+      "?subject=" + encodeURIComponent("Расчёт с сайта: " + st.obj + ", " + st.area + " м²") +
+      "&body=" + encodeURIComponent(body);
   });
 
   switchObject();
   recalc(false);   // первый показ без счётчика: цифра на месте сразу
-}
-
-/* ═══════════════════════════════════════════════════════════
-   ФОРМА. Бэкенда нет, поэтому честно: письмо открывается
-   в почтовой программе посетителя.
-   ═══════════════════════════════════════════════════════════ */
-var form = document.getElementById("leadForm");
-if (form){
-  var fname = document.getElementById("fname"), fphone = document.getElementById("fphone");
-  function setErr(input, id, msg){
-    var box = document.getElementById(id);
-    box.textContent = msg || "";
-    input.closest(".f-row").classList.toggle("bad", !!msg);
-    if (msg){ input.setAttribute("aria-invalid","true"); input.setAttribute("aria-describedby", id); }
-    else { input.removeAttribute("aria-invalid"); input.removeAttribute("aria-describedby"); }
-    return !msg;
-  }
-  function validName(){ return setErr(fname,"err-name", fname.value.trim().length < 2 ? "Напишите, как к вам обращаться" : ""); }
-  function validPhone(){
-    var d = fphone.value.replace(/\D/g,"");
-    return setErr(fphone,"err-phone", d.length < 10 ? "Нужен номер из 10 или 11 цифр" : "");
-  }
-  fname.addEventListener("blur", validName);
-  fphone.addEventListener("blur", validPhone);
-  form.addEventListener("submit", function(e){
-    e.preventDefault();
-    var okN = validName(), okP = validPhone();
-    if (!okN){ fname.focus(); return; }
-    if (!okP){ fphone.focus(); return; }
-    var body =
-      "Имя: " + fname.value.trim() + "\n" +
-      "Телефон: " + fphone.value.trim() + "\n" +
-      "Объект: " + document.getElementById("fobj").value + "\n" +
-      "Задача: " + (document.getElementById("fmsg").value.trim() || "не указана") + "\n\n" +
-      "Отправлено с сайта Воробьевский Синдикат";
-    window.location.href = "mailto:" + CONFIG.email +
-      "?subject=" + encodeURIComponent("Заявка на замер: " + document.getElementById("fobj").value) +
-      "&body=" + encodeURIComponent(body);
-    form.classList.add("sent");
-    document.getElementById("formOk").classList.add("on");
-  });
 }
 
 /* ═══════════════════════════════════════════════════════════
