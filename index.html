@@ -784,40 +784,79 @@ footer{border-top:1px solid var(--line);padding:var(--sp-5) 0 var(--sp-4);positi
 @property --k{syntax:"<number>";initial-value:0;inherits:true}
 
 @media (max-width:900px){
-  /* Телефон листает такты свайпом, поэтому герой ровно в экран,
-     а не в одиннадцать. Длинная прокрутка тут не нужна. */
+  /* ═══ ТЕЛЕФОН: кадр полосой сверху, текст под ним ═══
+     Кадр приклеен под шапкой полосой 16:9, а всё остальное считается
+     от его низа: --frame это высота кадра. Текст больше не спорит
+     с картинкой, потому что живёт на чистом фоне. */
+  :root{ --navh:58px; --frame:56.25vw; }
+
   .hero{height:100svh}
-  .hero.beats .stage{position:relative;height:100svh}
-  .hero.beats .band{transition:opacity .45s var(--e-soft),--k .6s var(--e-out)}
-  .hero.beats .plate{transition:opacity .45s var(--e-soft),--k .6s var(--e-out)}
+  .hero.beats .stage{position:relative;height:100svh;background:var(--bg);overflow:visible}
+
+  /* сам кадр */
+  .hero.beats .stage video,
+  .hero.beats .poster{
+    position:absolute;top:var(--navh);left:0;right:0;
+    width:100%;height:var(--frame);object-fit:cover;
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  /* затемнения работают внутри кадра, а не на весь экран */
+  .hero.beats .scrim,.hero.beats .vig{
+    top:var(--navh);height:var(--frame);bottom:auto}
+  .hero.beats .scrim{background:radial-gradient(ellipse 130% 100% at 50% 45%,
+    rgba(8,10,16,0) 42%,rgba(8,10,16,.5) 100%)}
+  .hero.beats .vig{background:linear-gradient(180deg,
+    rgba(8,10,16,.55) 0%,rgba(8,10,16,0) 26%,rgba(8,10,16,0) 68%,rgba(8,10,16,.6) 100%)}
+
+  /* свободная зона под кадром: сюда приходят подписи */
+  .hero.beats .band{
+    top:calc(var(--navh) + var(--frame));bottom:112px;
+    align-content:center;padding:18px 22px 26px;text-shadow:none}
+  .hero.beats .band::before{display:none}
+  .hero.beats .band-in{max-width:100%}
+  .hero.beats .band.right .band-in{margin-left:0;text-align:left}
+  .hero.beats .band.right .band-eyebrow{justify-content:flex-start}
+  .hero.beats .band.right .lede,.hero.beats .band.right .chip-row{margin-left:0;justify-content:flex-start}
+  .hero.beats .band h1,.hero.beats .band h2{font-size:clamp(29px,8.2vw,42px)}
+  .hero.beats .band .lede{font-size:15.5px;max-width:100%;margin-top:14px;color:var(--ink-2)}
+  .hero.beats .band .chip-row{margin-top:18px}
+  .hero.beats .band-eyebrow{flex-wrap:wrap;gap:6px 10px;margin-bottom:12px;font-size:10px;letter-spacing:.1em}
+
+  /* плашка с цифрами живёт в той же зоне */
+  .hero.beats .plate{top:calc(var(--navh) + var(--frame));bottom:118px;
+    place-content:center;padding:0 22px}
+  .hero.beats .plate::before{display:none}
+  .hero.beats .plate-in{gap:20px}
+  .hero.beats .plate-t b{font-size:clamp(34px,11vw,48px)}
+  .hero.beats .plate-rule{top:-26px}
+
+  /* рейка у нижнего края, счётчик и подсказка над ней */
+  .hero.beats .rail{padding:0 22px 22px}
+  .hero.beats .rail-obj{font-size:14px}
+  .hero.beats .rail-price b{font-size:19px}
+  .hero.beats .vload{top:calc(var(--navh) + 10px);right:14px;
+    padding:5px 9px;font-size:9.5px;background:rgba(8,10,15,.62)}
+  .hero.beats .cue{bottom:118px;color:var(--ink-3)}
+  .hero.beats .cue-line{height:22px}
+
+  /* переходы такта */
+  .hero.beats .band,.hero.beats .plate{transition:opacity .45s var(--e-soft),--k .6s var(--e-out)}
   .hero.beats .rail-fill,.hero.beats .rail-dot{transition:width .6s var(--e-out),left .6s var(--e-out)}
-  /* подсказка про свайп вместо «листайте» */
-  .hero.beats .cue{bottom:150px}
-  .band{align-content:end;padding:88px 20px 21vh}
-  .band-in{max-width:100%}
-  .band.right .band-in{margin-left:0;text-align:left}
-  .band.right .band-eyebrow{justify-content:flex-start}
-  .band.right .lede,.band.right .chip-row{margin-left:0;justify-content:flex-start}
-  .band h1,.band h2{font-size:clamp(30px,8.6vw,46px)}
-  .band .lede{font-size:16px;max-width:100%;margin-top:16px}
-  .band .chip-row{margin-top:18px}
-  .band::before{inset:0;
-    background:linear-gradient(to top,rgba(5,6,12,.93) 0%,rgba(5,6,12,.78) 34%,rgba(5,6,12,.28) 62%,rgba(5,6,12,0) 88%)}
-  .plate-in{gap:26px}
-  .plate-t b{font-size:clamp(38px,13vw,58px)}
-  .rail{padding-left:20px;padding-right:20px;padding-bottom:18px}
-  .rail-obj{font-size:14px}
-  .rail-price b{font-size:19px}
-  .vload{top:84px;right:20px}
-  .cue{bottom:132px}
-  /* надстрочник переносится, а не уезжает за край */
-  .band-eyebrow{flex-wrap:wrap;gap:6px 10px;margin-bottom:12px;font-size:10px;letter-spacing:.1em}
+
+  /* Четыре шага на телефоне занимают целый экран и тормозят путь
+     к заявке, поэтому там их не показываем. */
+  #flow{display:none}
 }
+
+@media (max-width:900px) and (min-height:780px){
+  /* на длинных экранах кадр может быть крупнее, воздуха хватает */
+  :root{ --frame:64vw; }
+}
+
 @media (max-width:560px){
   /* в шапке телефона кнопка не помещается, а звонок сильнее её:
      оставляем номер, а «вызвать замерщика» живёт в самом герое и в конце */
   .nav > .btn{display:none}
-  .nav{padding-top:10px;padding-bottom:10px}
+  .nav{padding-top:9px;padding-bottom:9px}
   .nav-logo img{width:36px}
   .nav-logo b{font-size:12px}
   .nav-logo b i{font-size:8.5px;letter-spacing:.2em}
@@ -1574,7 +1613,7 @@ var SOURCES = {
     poster: "assets/hero-poster.jpg"
   },
   mobile: {
-    lite:   { url:"assets/hero-scrub-m.mp4",  bytes:4982485  },
+    lite:   { url:"assets/hero-scrub-m.mp4",  bytes:4334780  },
     full:   null,
     poster: "assets/hero-poster-m.jpg"
   }
@@ -1691,6 +1730,9 @@ function heroProgress(){
 var loadK = 0, lastRailStr = "", lastRailAt = 0, lastTickIdx = -1, lastDim = null;
 
 function updateCaptions(p){
+  /* В режиме тактов подписями правит paintBeat. Если пустить сюда
+     прокрутку, она перезапишет --k и переход застрянет на полпути. */
+  if (beatsOn) return;
   var plateOn = 0;
   for (var i=0;i<BANDS.length;i++){
     var b = BANDS[i], f = Math.min(0.02, (b.b-b.a)/3);
@@ -1776,6 +1818,7 @@ function tick(now){
   updateCaptions(shown);
 }
 function onScroll(){
+  if (beatsOn) return;
   target = heroProgress();
   if (rafId === null && heroOnScreen) rafId = requestAnimationFrame(tick);
 }
