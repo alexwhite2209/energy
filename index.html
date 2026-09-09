@@ -951,7 +951,7 @@ body.paused *,body.paused *::before,body.paused *::after{animation-play-state:pa
       </div>
 
       <!-- 3. Внутри стены. Самый сильный аргумент -->
-      <div class="band e-blur right" data-a="0.314" data-b="0.406" data-sx="68%" data-ramp="0.036">
+      <div class="band e-blur right" data-a="0.314" data-b="0.406" data-sx="68%" data-ramp="0.036" data-m-off>
         <div class="band-in">
           <div class="band-eyebrow mono">Что под штукатуркой</div>
           <h2 class="e-blur">
@@ -983,7 +983,7 @@ body.paused *,body.paused *::before,body.paused *::after{animation-play-state:pa
       </div>
 
       <!-- 6. Производство -->
-      <div class="band e-punch" data-a="0.650" data-b="0.802" data-sx="33%">
+      <div class="band e-punch" data-a="0.650" data-b="0.802" data-sx="33%" data-m="0.672">
         <div class="band-in">
           <div class="band-eyebrow mono">04 <span>Производство</span></div>
           <h2 data-split="word" data-em="2">Простой стоит дороже</h2>
@@ -992,8 +992,19 @@ body.paused *,body.paused *::before,body.paused *::after{animation-play-state:pa
         </div>
       </div>
 
+      <!-- Только для телефона: кадр внутри цеха. На десктопе полоса
+           стоит за пределами прокрутки и не показывается никогда. -->
+      <div class="band e-drift" data-a="2" data-b="2.1" data-m="0.855" data-sx="34%">
+        <div class="band-in">
+          <div class="band-eyebrow mono">05 <span>Завод и сети</span></div>
+          <h2 data-split="word">Держим цех на ходу</h2>
+          <p class="lede stage-2">ТП и РУ, кабельные линии 10 кВ, релейная защита, учёт. Обслуживаем после сдачи, чтобы линия не встала из-за одного автомата.</p>
+          <div class="chip-row stage-3"><span class="chip mono">проект и монтаж <b>от 3 000 000 ₽</b></span></div>
+        </div>
+      </div>
+
       <!-- 7. Посадка на городе -->
-      <div class="band e-rise" data-a="0.878" data-b="1" data-sx="40%">
+      <div class="band e-rise" data-a="0.878" data-b="1" data-sx="40%" data-m="0.987">
         <div class="band-in">
           <div class="band-eyebrow mono">Воробьевский Синдикат</div>
           <h2 data-split="word">Один подрядчик. Любой масштаб.</h2>
@@ -1018,7 +1029,7 @@ body.paused *,body.paused *::before,body.paused *::after{animation-play-state:pa
         <span class="rail-tick" style="--x:37%">Дом</span>
         <span class="rail-tick" style="--x:50%">Офис</span>
         <span class="rail-tick" style="--x:65%">Цех</span>
-        <span class="rail-tick" style="--x:96%">Завод</span>
+        <span class="rail-tick" style="--x:84%">Завод</span>
       </div>
     </div>
 
@@ -1546,7 +1557,7 @@ var CONFIG = {
     { at:0.372, obj:"Дом",      price:"от 200 000 ₽"   },
     { at:0.496, obj:"Офис",     price:"от 450 000 ₽"   },
     { at:0.645, obj:"Цех",      price:"от 1 200 000 ₽" },
-    { at:0.958, obj:"Завод",    price:"от 3 000 000 ₽" }
+    { at:0.838, obj:"Завод",    price:"от 3 000 000 ₽" }
   ]
 };
 
@@ -1965,7 +1976,7 @@ function initHeroOnce(){
 
     attach(vidLite, src.lite.url)
       .then(function(){
-        if (beatsOn){ try { video.currentTime = STOPS[beatI] * video.duration; } catch(e){} }
+        if (beatsOn){ try { video.currentTime = STOPS[beatI].p * video.duration; } catch(e){} }
         else { warmDecoder(); requestSeek(heroProgress() * video.duration); }
         stage.classList.add("video-ready");
         onScroll();
@@ -2021,13 +2032,24 @@ function disableScrub(){
 var beatsOn = false, beatI = 0, beatRaf = null, STOPS = [];
 var cancelMove = null;            // сносит текущий переход, если пришёл новый
 
+/* Мобильная карта тактов живёт отдельно от прокруточной.
+   data-m задаёт свою точку остановки, data-m-off убирает полосу
+   с телефона. Полосы с диапазоном за единицей существуют только
+   здесь: прокрутка до них не доходит никогда. */
 function buildStops(){
-  STOPS = BANDS.map(function(b){ return (b.a + b.b) / 2; });
+  STOPS = [];
+  BANDS.forEach(function(b, i){
+    if (b.el.hasAttribute("data-m-off")) return;
+    var m = b.el.getAttribute("data-m");
+    STOPS.push({ bi: i, p: m !== null ? parseFloat(m) : (b.a + b.b) / 2 });
+  });
+  STOPS.sort(function(x, y){ return x.p - y.p; });
 }
 
 function paintBeat(i){
+  var cur = STOPS[i];
   for (var n=0;n<BANDS.length;n++){
-    var b = BANDS[n], on = n === i;
+    var b = BANDS[n], on = n === cur.bi;
     b.el.style.opacity = on ? "1" : "0";
     b.el.style.setProperty("--k", on ? "1" : "0");
     b.op = on ? 1 : 0; b.k = on ? 1 : 0;
@@ -2038,8 +2060,8 @@ function paintBeat(i){
       }
     }
   }
-  var p = STOPS[i];
-  rail.classList.toggle("dim", !!BANDS[i].plate);
+  var p = cur.p;
+  rail.classList.toggle("dim", !!BANDS[cur.bi].plate);
   railFill.style.setProperty("--p", p.toFixed(4));
   railDot.style.setProperty("--p", p.toFixed(4));
   var st = CONFIG.steps[0], si = 0;
@@ -2104,31 +2126,54 @@ function playForward(to, done){
   })();
 }
 
-/* Назад: короткая обратная перемотка. Файл всё-интра, поэтому
-   каждый шаг попадает мгновенно и ход выходит ровным. */
+/* Назад: шагаем ступенями и КАЖДЫЙ раз ждём готовый кадр.
+   Раньше здесь был плавный тween, который слал по тридцать перемоток
+   в секунду. Они вставали в очередь и рвали картинку. Теперь новая
+   перемотка идёт только после того, как предыдущая доехала. */
 function seekTo(to, done){
   if (!video.duration){ done(); return; }
-  var from = video.currentTime, target = to * video.duration;
   video.pause(); video.playbackRate = 1;
-  var t0 = performance.now(), DUR = 560, dead = false;
-  cancelMove = function(){ dead = true; };
-  var guard = setTimeout(function(){
+  var el = video, from = el.currentTime, target = to * el.duration;
+  var STEPS = 9, k = 0, dead = false, timer = null;
+
+  cancelMove = function(){
+    dead = true;
+    if (timer) clearTimeout(timer);
+    el.removeEventListener("seeked", next);
+  };
+  function land(){
     if (dead) return;
-    try { video.currentTime = target; } catch(e){}
-    stopBeatRaf(); cancelMove = null; done();
-  }, DUR + 500);                    // предохранитель, если кадры придушены
-  (function step(now){
-    if (dead){ clearTimeout(guard); return; }
-    var t = clamp((now - t0)/DUR, 0, 1);
-    var e = 1 - Math.pow(1 - t, 3);
-    try { video.currentTime = from + (target - from) * e; } catch(err){}
-    if (t < 1){ beatRaf = requestAnimationFrame(step); }
-    else { clearTimeout(guard); beatRaf = null; cancelMove = null; done(); }
-  })(t0);
+    cancelMove = null;
+    el.removeEventListener("seeked", next);
+    if (timer) clearTimeout(timer);
+    try { el.currentTime = target; } catch(e){}
+    done();
+  }
+  var PACE = 42, lastAt = performance.now();
+  function step(){
+    if (dead) return;
+    k++;
+    if (k >= STEPS){ land(); return; }
+    var t = k / STEPS, e = 1 - Math.pow(1 - t, 3);
+    lastAt = performance.now();
+    /* предохранитель: если кадр не приедет, не зависаем на шаге */
+    timer = setTimeout(next, 260);
+    try { el.currentTime = from + (target - from) * e; } catch(err){ land(); }
+  }
+  /* Кадр приезжает за считаные миллисекунды, и без выдержки весь откат
+     схлопывается в мгновение. Держим ровный шаг, чтобы читалось
+     перемоткой, а не склейкой. */
+  function next(){
+    if (dead) return;
+    if (timer) clearTimeout(timer);
+    var wait = PACE - (performance.now() - lastAt);
+    if (wait > 4) timer = setTimeout(step, wait); else step();
+  }
+  el.addEventListener("seeked", next);
+  timer = setTimeout(next, 260);
+  try { el.currentTime = from + (target - from) * (1/STEPS); } catch(e){ land(); }
 }
 
-/* Свайп во время перехода не теряется: сносим текущий и уходим
-   к новому такту от той точки, где сейчас находимся. */
 function goBeat(i){
   if (i < 0 || i >= STOPS.length || i === beatI) return false;
   var back = i < beatI;
@@ -2137,7 +2182,7 @@ function goBeat(i){
   if (cancelMove){ cancelMove(); cancelMove = null; }
   stopBeatRaf();
   var fin = function(){};
-  if (back) seekTo(STOPS[i], fin); else playForward(STOPS[i], fin);
+  if (back) seekTo(STOPS[i].p, fin); else playForward(STOPS[i].p, fin);
   return true;
 }
 
