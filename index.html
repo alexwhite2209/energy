@@ -466,25 +466,71 @@ h2.sec-t{font-size:clamp(30px,4.2vw,58px);text-transform:uppercase;letter-spacin
 @media (max-width:900px){.works{grid-template-columns:1fr 1fr}}
 @media (max-width:560px){.works{grid-template-columns:1fr}}
 
-/* --- ГАЛЕРЕЯ РЕАЛЬНЫХ РАБОТ. Кладка колонками: снимки с объектов
-       приходят в разной ориентации, и сетка не должна их резать. --- */
-.gal{columns:3;column-gap:14px}
-.gal-i{break-inside:avoid;margin:0 0 14px;position:relative;display:block;width:100%;
-  padding:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;
-  background:var(--bg-2);cursor:zoom-in;
-  transition:border-color .45s var(--e-soft),transform .45s var(--e-out)}
-.gal-i:hover{border-color:rgba(37,151,240,.45);transform:translateY(-3px)}
-.gal-i img{display:block;width:100%;height:auto;
-  transition:transform 1s var(--e-out),filter .45s var(--e-soft);filter:brightness(.88)}
-.gal-i:hover img{transform:scale(1.045);filter:brightness(1)}
-.gal-cap{position:absolute;left:0;right:0;bottom:0;padding:34px 16px 14px;
-  font-size:13.5px;line-height:1.45;color:#DCE5EF;text-align:left;
-  background:linear-gradient(to top,rgba(6,8,13,.94),rgba(6,8,13,.55) 55%,transparent);
-  opacity:0;transform:translateY(10px);
-  transition:opacity .4s var(--e-soft),transform .4s var(--e-out)}
-.gal-i:hover .gal-cap,.gal-i:focus-visible .gal-cap{opacity:1;transform:none}
-@media (max-width:900px){.gal{columns:2}}
-@media (max-width:560px){.gal{columns:1}.gal-cap{opacity:1;transform:none}}
+/* --- ГАЛЕРЕЯ: карусель в перспективе. Соседние карточки уходят
+       вглубь и разворачиваются, активная стоит ровно и во весь свет. --- */
+.cf{position:relative;height:clamp(420px,46vw,600px);
+  perspective:1700px;perspective-origin:50% 50%;
+  touch-action:pan-y;user-select:none;overflow:hidden}
+.cf-track{position:absolute;inset:0;transform-style:preserve-3d}
+.cf-c{position:absolute;top:50%;left:50%;width:min(560px,62vw);aspect-ratio:3/2;
+  margin:0;padding:0;border:0;background:#0C1017;border-radius:16px;overflow:hidden;
+  cursor:pointer;color:inherit;text-align:left;
+  box-shadow:0 30px 70px -28px rgba(0,0,0,.95);
+  transform-origin:50% 50%;will-change:transform,opacity;
+  transition:transform .72s var(--e-out),opacity .72s var(--e-out),filter .72s var(--e-out);
+  outline-offset:4px}
+.cf-c img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.cf-c::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(to top,rgba(6,8,13,.92) 0%,rgba(6,8,13,.35) 42%,rgba(6,8,13,0) 72%);
+  opacity:0;transition:opacity .5s var(--e-soft)}
+.cf-c.on::after{opacity:1}
+.cf-t{position:absolute;left:0;right:0;bottom:0;padding:22px 24px;z-index:2;
+  opacity:0;transform:translateY(14px);
+  transition:opacity .5s var(--e-out) .16s,transform .5s var(--e-out) .16s}
+.cf-c.on .cf-t{opacity:1;transform:none}
+.cf-t b{display:block;font-family:Onest;font-weight:800;letter-spacing:-.02em;
+  font-size:clamp(18px,2.1vw,25px);line-height:1.1}
+.cf-t span{display:block;margin-top:7px;color:#BFCBD9;font-size:14.5px;line-height:1.4}
+.cf-c.on{cursor:zoom-in}
+/* боковые карточки подписаны крупно и под углом, как в развороте */
+.cf-side{position:absolute;left:24px;bottom:26px;right:24px;z-index:2;
+  font-family:Onest;font-weight:800;font-size:clamp(15px,1.7vw,21px);
+  letter-spacing:-.015em;line-height:1.15;color:#E7EEF7;
+  text-shadow:0 2px 14px rgba(4,6,10,.95);
+  opacity:1;transition:opacity .45s var(--e-soft)}
+.cf-c.on .cf-side{opacity:0}
+
+.cf-nav{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:26px}
+.cf-dot{width:9px;height:9px;padding:0;border:0;border-radius:50%;cursor:pointer;
+  background:rgba(150,170,200,.3);
+  transition:background .35s var(--e-soft),transform .35s var(--e-out),box-shadow .35s}
+.cf-dot:hover{background:rgba(150,170,200,.6)}
+.cf-dot.on{background:#EAF4FF;transform:scale(1.25);
+  box-shadow:0 0 14px 2px rgba(120,200,255,.7)}
+.cf-open{margin-left:8px;width:32px;height:32px;display:grid;place-items:center;
+  padding:0;border:1px solid var(--line-strong);border-radius:9px;cursor:pointer;
+  background:rgba(255,255,255,.03);color:var(--ink-2);
+  transition:border-color .3s,color .3s,transform .3s var(--e-out)}
+.cf-open:hover{border-color:var(--blue);color:var(--blue-hi);transform:translateY(-2px)}
+.cf-open svg{width:15px;height:15px}
+.cf-arrows{position:absolute;inset:0;pointer-events:none;z-index:20}
+.cf-arrow{position:absolute;top:50%;margin-top:-24px;width:48px;height:48px;
+  pointer-events:auto;display:grid;place-items:center;cursor:pointer;padding:0;
+  border:1px solid var(--line-strong);border-radius:50%;color:var(--ink);
+  background:rgba(14,19,27,.7);backdrop-filter:blur(8px);
+  transition:border-color .3s,background .3s,transform .3s var(--e-out),opacity .3s}
+.cf-arrow:hover{border-color:var(--blue);background:rgba(22,32,46,.9);transform:scale(1.07)}
+.cf-arrow svg{width:20px;height:20px}
+.cf-l{left:10px}.cf-r{right:10px}
+@media (max-width:620px){
+  .cf{height:clamp(330px,74vw,420px)}
+  .cf-c{width:80vw}
+  .cf-arrow{width:40px;height:40px;margin-top:-20px}
+  .cf-t{padding:16px 18px}
+}
+@media (prefers-reduced-motion:reduce){
+  .cf-c{transition:none}
+}
 
 /* лайтбокс */
 .lb{position:fixed;inset:0;z-index:800;display:none;place-items:center;
@@ -1121,55 +1167,93 @@ body.paused *,body.paused *::before,body.paused *::after{animation-play-state:pa
       <h2 class="sec-t rv">Снято на наших объектах</h2>
       <p class="sec-lede rv">Не отрисовка и не сток. Это фотографии с объектов в Нижнем Новгороде и области, те же самые, что лежат в нашей карточке на Яндекс.Картах.</p>
     </div>
-    <div class="gal rv" id="gal">
-      <button type="button" class="gal-i" data-i="0">
-        <img src="assets/g01.jpg" alt="Щит на 40 линий. Автоматы, УЗО, маркировка каждой жилы." loading="lazy">
-        <span class="gal-cap">Щит на 40 линий. Автоматы, УЗО, маркировка каждой жилы.</span>
-      </button>
-      <button type="button" class="gal-i" data-i="1">
-        <img src="assets/g02.jpg" alt="Кальян-бар. Контурная неоновая подсветка зала." loading="lazy">
-        <span class="gal-cap">Кальян-бар. Контурная неоновая подсветка зала.</span>
-      </button>
-      <button type="button" class="gal-i" data-i="2">
-        <img src="assets/g03.jpg" alt="Склад. Линейное освещение по ферме, ввод и щит." loading="lazy">
-        <span class="gal-cap">Склад. Линейное освещение по ферме, ввод и щит.</span>
-      </button>
-      <button type="button" class="gal-i" data-i="3">
-        <img src="assets/g04.jpg" alt="Наружные сети. Монтаж соединительной муфты в траншее." loading="lazy">
-        <span class="gal-cap">Наружные сети. Монтаж соединительной муфты в траншее.</span>
-      </button>
-      <button type="button" class="gal-i" data-i="4">
-        <img src="assets/g05.jpg" alt="Дизайнерский световой потолок. Сборка и подключение." loading="lazy">
-        <span class="gal-cap">Дизайнерский световой потолок. Сборка и подключение.</span>
-      </button>
-      <button type="button" class="gal-i" data-i="5">
-        <img src="assets/g06.jpg" alt="Шкафы автоматики. Управление и сигнализация на производстве." loading="lazy">
-        <span class="gal-cap">Шкафы автоматики. Управление и сигнализация на производстве.</span>
-      </button>
-      <button type="button" class="gal-i" data-i="6">
-        <img src="assets/g07.jpg" alt="Гостиная. Скрытая световая линия по периметру потолка." loading="lazy">
-        <span class="gal-cap">Гостиная. Скрытая световая линия по периметру потолка.</span>
-      </button>
-      <button type="button" class="gal-i" data-i="7">
-        <img src="assets/g08.jpg" alt="Световая инсталляция на опоре. Монтаж и подключение." loading="lazy">
-        <span class="gal-cap">Световая инсталляция на опоре. Монтаж и подключение.</span>
-      </button>
-      <button type="button" class="gal-i" data-i="8">
-        <img src="assets/g09.jpg" alt="Уличный щит учёта. Ввод на объект." loading="lazy">
-        <span class="gal-cap">Уличный щит учёта. Ввод на объект.</span>
-      </button>
-      <button type="button" class="gal-i" data-i="9">
-        <img src="assets/g10.jpg" alt="Работа на опоре. Воздушная линия и уличное освещение." loading="lazy">
-        <span class="gal-cap">Работа на опоре. Воздушная линия и уличное освещение.</span>
-      </button>
-      <button type="button" class="gal-i" data-i="10">
-        <img src="assets/g11.jpg" alt="Квартира до отделки. Разводка по бетону, подрозетники." loading="lazy">
-        <span class="gal-cap">Квартира до отделки. Разводка по бетону, подрозетники.</span>
-      </button>
-      <button type="button" class="gal-i" data-i="11">
-        <img src="assets/g12.jpg" alt="Кабельный ввод в щит. Разделка и маркировка линий." loading="lazy">
-        <span class="gal-cap">Кабельный ввод в щит. Разделка и маркировка линий.</span>
-      </button>
+
+    <div class="cf rv" id="cf" role="group" aria-roledescription="карусель" aria-label="Фотографии объектов" tabindex="0">
+      <div class="cf-track" id="cfTrack">
+        <button type="button" class="cf-c" data-i="0" aria-label="Щит на 40 линий. Автоматы, УЗО, маркировка каждой жилы">
+          <img src="assets/g01.jpg" alt="Щит на 40 линий. Автоматы, УЗО, маркировка каждой жилы" loading="lazy">
+          <span class="cf-side">Щит на 40 линий</span>
+          <span class="cf-t"><b>Щит на 40 линий</b><span>Автоматы, УЗО, маркировка каждой жилы</span></span>
+        </button>
+        <button type="button" class="cf-c" data-i="1" aria-label="Кальян-бар. Контурная неоновая подсветка зала">
+          <img src="assets/g02.jpg" alt="Кальян-бар. Контурная неоновая подсветка зала" loading="lazy">
+          <span class="cf-side">Кальян-бар</span>
+          <span class="cf-t"><b>Кальян-бар</b><span>Контурная неоновая подсветка зала</span></span>
+        </button>
+        <button type="button" class="cf-c" data-i="2" aria-label="Склад. Линейное освещение по ферме, ввод и щит">
+          <img src="assets/g03.jpg" alt="Склад. Линейное освещение по ферме, ввод и щит" loading="lazy">
+          <span class="cf-side">Склад</span>
+          <span class="cf-t"><b>Склад</b><span>Линейное освещение по ферме, ввод и щит</span></span>
+        </button>
+        <button type="button" class="cf-c" data-i="3" aria-label="Наружные сети. Монтаж соединительной муфты в траншее">
+          <img src="assets/g04.jpg" alt="Наружные сети. Монтаж соединительной муфты в траншее" loading="lazy">
+          <span class="cf-side">Наружные сети</span>
+          <span class="cf-t"><b>Наружные сети</b><span>Монтаж соединительной муфты в траншее</span></span>
+        </button>
+        <button type="button" class="cf-c" data-i="4" aria-label="Световой потолок. Сборка и подключение по дизайн-проекту">
+          <img src="assets/g05.jpg" alt="Световой потолок. Сборка и подключение по дизайн-проекту" loading="lazy">
+          <span class="cf-side">Световой потолок</span>
+          <span class="cf-t"><b>Световой потолок</b><span>Сборка и подключение по дизайн-проекту</span></span>
+        </button>
+        <button type="button" class="cf-c" data-i="5" aria-label="Шкафы автоматики. Управление и сигнализация на производстве">
+          <img src="assets/g06.jpg" alt="Шкафы автоматики. Управление и сигнализация на производстве" loading="lazy">
+          <span class="cf-side">Шкафы автоматики</span>
+          <span class="cf-t"><b>Шкафы автоматики</b><span>Управление и сигнализация на производстве</span></span>
+        </button>
+        <button type="button" class="cf-c" data-i="6" aria-label="Гостиная. Скрытая световая линия по периметру потолка">
+          <img src="assets/g07.jpg" alt="Гостиная. Скрытая световая линия по периметру потолка" loading="lazy">
+          <span class="cf-side">Гостиная</span>
+          <span class="cf-t"><b>Гостиная</b><span>Скрытая световая линия по периметру потолка</span></span>
+        </button>
+        <button type="button" class="cf-c" data-i="7" aria-label="Световая инсталляция. Монтаж и подключение на опоре">
+          <img src="assets/g08.jpg" alt="Световая инсталляция. Монтаж и подключение на опоре" loading="lazy">
+          <span class="cf-side">Световая инсталляция</span>
+          <span class="cf-t"><b>Световая инсталляция</b><span>Монтаж и подключение на опоре</span></span>
+        </button>
+        <button type="button" class="cf-c" data-i="8" aria-label="Уличный щит учёта. Ввод на объект">
+          <img src="assets/g09.jpg" alt="Уличный щит учёта. Ввод на объект" loading="lazy">
+          <span class="cf-side">Уличный щит учёта</span>
+          <span class="cf-t"><b>Уличный щит учёта</b><span>Ввод на объект</span></span>
+        </button>
+        <button type="button" class="cf-c" data-i="9" aria-label="Работа на опоре. Воздушная линия и уличное освещение">
+          <img src="assets/g10.jpg" alt="Работа на опоре. Воздушная линия и уличное освещение" loading="lazy">
+          <span class="cf-side">Работа на опоре</span>
+          <span class="cf-t"><b>Работа на опоре</b><span>Воздушная линия и уличное освещение</span></span>
+        </button>
+        <button type="button" class="cf-c" data-i="10" aria-label="Квартира до отделки. Разводка по бетону, подрозетники">
+          <img src="assets/g11.jpg" alt="Квартира до отделки. Разводка по бетону, подрозетники" loading="lazy">
+          <span class="cf-side">Квартира до отделки</span>
+          <span class="cf-t"><b>Квартира до отделки</b><span>Разводка по бетону, подрозетники</span></span>
+        </button>
+        <button type="button" class="cf-c" data-i="11" aria-label="Кабельный ввод в щит. Разделка и маркировка линий">
+          <img src="assets/g12.jpg" alt="Кабельный ввод в щит. Разделка и маркировка линий" loading="lazy">
+          <span class="cf-side">Кабельный ввод в щит</span>
+          <span class="cf-t"><b>Кабельный ввод в щит</b><span>Разделка и маркировка линий</span></span>
+        </button>
+      </div>
+      <div class="cf-arrows">
+        <button type="button" class="cf-arrow cf-l" id="cfPrev" aria-label="Предыдущее фото">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 5-7 7 7 7"/></svg></button>
+        <button type="button" class="cf-arrow cf-r" id="cfNext" aria-label="Следующее фото">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 5 7 7-7 7"/></svg></button>
+      </div>
+    </div>
+
+    <div class="cf-nav" id="cfNav">
+        <button type="button" class="cf-dot" data-d="0" aria-label="Фото 1"></button>
+        <button type="button" class="cf-dot" data-d="1" aria-label="Фото 2"></button>
+        <button type="button" class="cf-dot" data-d="2" aria-label="Фото 3"></button>
+        <button type="button" class="cf-dot" data-d="3" aria-label="Фото 4"></button>
+        <button type="button" class="cf-dot" data-d="4" aria-label="Фото 5"></button>
+        <button type="button" class="cf-dot" data-d="5" aria-label="Фото 6"></button>
+        <button type="button" class="cf-dot" data-d="6" aria-label="Фото 7"></button>
+        <button type="button" class="cf-dot" data-d="7" aria-label="Фото 8"></button>
+        <button type="button" class="cf-dot" data-d="8" aria-label="Фото 9"></button>
+        <button type="button" class="cf-dot" data-d="9" aria-label="Фото 10"></button>
+        <button type="button" class="cf-dot" data-d="10" aria-label="Фото 11"></button>
+        <button type="button" class="cf-dot" data-d="11" aria-label="Фото 12"></button>
+      <button type="button" class="cf-open" id="cfOpen" aria-label="Открыть фото на весь экран">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 4h6v6M20 4l-8 8M10 20H4v-6M4 20l8-8"/></svg></button>
     </div>
   </div>
 </section>
@@ -1671,7 +1755,7 @@ function paintLoader(reveal, draw){
   lg.style.setProperty("--draw", draw.toFixed(3) + "turn");
 }
 function spinLoop(){
-  spin = (spin + 0.0098) % 1;
+  spin = (spin + 0.0138) % 1;
   if (lg) lg.style.setProperty("--spin", spin.toFixed(4));
   spinRaf = requestAnimationFrame(spinLoop);
 }
@@ -1705,8 +1789,8 @@ function runLoader(){
   try { sessionStorage.setItem("vs_seen","1"); } catch(e){}
   spinLoop();
   var t0 = performance.now();
-  var DRAW_FROM = 200, DRAW_MS = 2400;       // кабель прочерчивается
-  var MIN = 4100, MAX = 6400;                // загрузчик никогда не залипает
+  var DRAW_FROM = 120, DRAW_MS = 1700;       // кабель прочерчивается
+  var MIN = 3000, MAX = 4600;                // ровно три секунды, дальше не держим
   (function step(now){
     var el = now - t0;
     /* собственная анимация прорисовки, замедляется к концу */
@@ -1715,9 +1799,9 @@ function runLoader(){
     /* байты могут обогнать анимацию, но не больше чем на 15 процентов:
        так кабель всегда читается как задуманное движение, а не как рывок */
     var draw = clamp(Math.max(own * 0.85, Math.min(netFrac, own + 0.15)), 0, 1);
-    var reveal = clamp((el - 800)/1300, 0, 1);
+    var reveal = clamp((el - 520)/900, 0, 1);
     paintLoader(reveal, draw);
-    lg.style.setProperty("--packet", clamp((el - 1600)/800, 0, 1).toFixed(3));
+    lg.style.setProperty("--packet", clamp((el - 1050)/600, 0, 1).toFixed(3));
     if (el > MAX || (el > MIN && (netFrac >= 1 || !willLoadVideo))){ paintLoader(1,1); finishLoader(); return; }
     requestAnimationFrame(step);
   })(t0);
@@ -2059,44 +2143,128 @@ if (whyGal){
 }
 
 /* ═══════════════════════════════════════════════════════════
-   ЛАЙТБОКС ГАЛЕРЕИ. Стрелки, Esc, клик по фону, возврат фокуса
-   на ту плитку, с которой открыли.
+   ГАЛЕРЕЯ-КАРУСЕЛЬ. Карточки расставлены в перспективе от центра:
+   чем дальше от активной, тем сильнее разворот и глубина.
+   Работает мышью, пальцем, стрелками и точками.
    ═══════════════════════════════════════════════════════════ */
-var gal = document.getElementById("gal");
-if (gal){
-  var tiles = [].slice.call(gal.querySelectorAll(".gal-i"));
-  var lb = document.getElementById("lb"), lbImg = document.getElementById("lbImg");
-  var lbCap = document.getElementById("lbCap"), lbNum = document.getElementById("lbNum");
-  var idx = 0, opener = null;
+var cf = document.getElementById("cf");
+if (cf){
+  var cards = [].slice.call(cf.querySelectorAll(".cf-c"));
+  var dots  = [].slice.call(document.querySelectorAll(".cf-dot"));
+  var N = cards.length, cur = 0, lastLaid = -1;
 
-  function show(i){
-    idx = (i + tiles.length) % tiles.length;
-    var t = tiles[idx], im = t.querySelector("img");
-    lbImg.src = im.src; lbImg.alt = im.alt;
-    lbCap.textContent = t.querySelector(".gal-cap").textContent;
-    lbNum.textContent = (idx + 1) + " / " + tiles.length;
+  function layout(){
+    for (var i=0;i<N;i++){
+      /* кратчайший путь по кольцу: карусель не «перематывается» через всю ленту */
+      var o = i - cur;
+      if (o >  N/2) o -= N;
+      if (o < -N/2) o += N;
+      var a = Math.abs(o), near = Math.min(a, 3);
+      var x  = o * 218;
+      var z  = -near * 165;
+      var ry = -o * 29;
+      var rz = -o * 6;
+      var sc = 1 - near * 0.045;
+      var op = a > 3 ? 0 : 1 - near * 0.12;
+      var br = a === 0 ? 1 : 0.62 - (near - 1) * 0.12;
+      var c = cards[i];
+      c.style.transform = "translate(-50%,-50%) translateX(" + x.toFixed(1) + "px) translateZ(" +
+                          z.toFixed(1) + "px) rotateY(" + ry.toFixed(1) + "deg) rotateZ(" +
+                          rz.toFixed(1) + "deg) scale(" + sc.toFixed(3) + ")";
+      c.style.opacity = op.toFixed(2);
+      c.style.filter = "brightness(" + br.toFixed(2) + ")";
+      c.style.zIndex = String(40 - near * 5);
+      c.classList.toggle("on", a === 0);
+      c.setAttribute("aria-current", a === 0 ? "true" : "false");
+      /* за пределами веера карточки не должны ловить клики и фокус */
+      c.style.pointerEvents = a > 3 ? "none" : "auto";
+      c.tabIndex = a === 0 ? 0 : -1;
+    }
+    for (var d=0;d<dots.length;d++) dots[d].classList.toggle("on", d === cur);
   }
-  function open(i){
-    opener = tiles[i]; show(i);
-    lb.classList.add("on");
+  function go(i){ cur = (i % N + N) % N; layout(); }
+
+  cards.forEach(function(c,i){
+    c.addEventListener("click", function(){
+      if (i === cur){ if (window.__lbOpen) window.__lbOpen(cur); }
+      else go(i);
+    });
+  });
+  dots.forEach(function(d,i){ d.addEventListener("click", function(){ go(i); }); });
+  document.getElementById("cfPrev").addEventListener("click", function(){ go(cur-1); });
+  document.getElementById("cfNext").addEventListener("click", function(){ go(cur+1); });
+  document.getElementById("cfOpen").addEventListener("click", function(){
+    if (window.__lbOpen) window.__lbOpen(cur);
+  });
+  cf.addEventListener("keydown", function(e){
+    if (e.key === "ArrowLeft"){ e.preventDefault(); go(cur-1); }
+    else if (e.key === "ArrowRight"){ e.preventDefault(); go(cur+1); }
+    else if (e.key === "Enter" || e.key === " "){
+      if (document.activeElement === cf){ e.preventDefault(); if (window.__lbOpen) window.__lbOpen(cur); }
+    }
+  });
+
+  /* перетаскивание и свайп */
+  var dx = 0, dragging = false, pid = null;
+  cf.addEventListener("pointerdown", function(e){
+    if (e.button) return;
+    dragging = true; dx = 0; pid = e.pointerId;
+  });
+  cf.addEventListener("pointermove", function(e){
+    if (!dragging || e.pointerId !== pid) return;
+    dx += e.movementX || 0;
+    if (Math.abs(dx) > 70){ go(cur - (dx > 0 ? 1 : -1)); dx = 0; }
+  });
+  function endDrag(){ dragging = false; pid = null; dx = 0; }
+  cf.addEventListener("pointerup", endDrag);
+  cf.addEventListener("pointercancel", endDrag);
+  cf.addEventListener("pointerleave", endDrag);
+
+  window.__cfGo = go;
+  layout();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ЛАЙТБОКС. Открывается из карусели, листается стрелками,
+   закрывается Esc и кликом по фону, фокус возвращается назад.
+   ═══════════════════════════════════════════════════════════ */
+var lb = document.getElementById("lb");
+if (lb){
+  var lbImg = document.getElementById("lbImg"), lbCap = document.getElementById("lbCap");
+  var lbNum = document.getElementById("lbNum");
+  var shots = [].slice.call(document.querySelectorAll(".cf-c"));
+  var li = 0, backTo = null;
+
+  function lbShow(i){
+    li = (i % shots.length + shots.length) % shots.length;
+    var t = shots[li], im = t.querySelector("img");
+    lbImg.src = im.src; lbImg.alt = im.alt;
+    var b = t.querySelector(".cf-t b"), sp = t.querySelector(".cf-t span");
+    lbCap.textContent = b.textContent + ". " + sp.textContent;
+    lbNum.textContent = (li + 1) + " / " + shots.length;
+  }
+  function lbOpen(i){
+    backTo = document.activeElement;
+    lbShow(i); lb.classList.add("on");
     document.body.style.overflow = "hidden";
     document.getElementById("lbClose").focus();
   }
-  function close(){
+  function lbClose(){
     lb.classList.remove("on");
     document.body.style.overflow = "";
-    if (opener) opener.focus();
+    if (window.__cfGo) window.__cfGo(li);
+    if (backTo && backTo.focus) backTo.focus();
   }
-  tiles.forEach(function(t, i){ t.addEventListener("click", function(){ open(i); }); });
-  document.getElementById("lbPrev").addEventListener("click", function(){ show(idx - 1); });
-  document.getElementById("lbNext").addEventListener("click", function(){ show(idx + 1); });
-  document.getElementById("lbClose").addEventListener("click", close);
-  lb.addEventListener("click", function(e){ if (e.target === lb) close(); });
+  window.__lbOpen = lbOpen;
+  document.getElementById("lbPrev").addEventListener("click", function(){ lbShow(li - 1); });
+  document.getElementById("lbNext").addEventListener("click", function(){ lbShow(li + 1); });
+  document.getElementById("lbClose").addEventListener("click", lbClose);
+  lb.addEventListener("click", function(e){ if (e.target === lb) lbClose(); });
   document.addEventListener("keydown", function(e){
     if (!lb.classList.contains("on")) return;
-    if (e.key === "Escape"){ e.preventDefault(); close(); }
-    else if (e.key === "ArrowLeft"){ e.preventDefault(); show(idx - 1); }
-    else if (e.key === "ArrowRight"){ e.preventDefault(); show(idx + 1); }
+    if (e.key === "Escape"){ e.preventDefault(); lbClose(); }
+    else if (e.key === "ArrowLeft"){ e.preventDefault(); lbShow(li - 1); }
+    else if (e.key === "ArrowRight"){ e.preventDefault(); lbShow(li + 1); }
   });
 }
 
