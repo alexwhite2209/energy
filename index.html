@@ -6,7 +6,7 @@
 <title>Воробьевский Синдикат | Электромонтаж в Нижнем Новгороде: от квартиры до завода</title>
 <meta name="description" content="Электромонтаж под ключ в Нижнем Новгороде и области. Квартиры, дома, офисы, производство. Проект, смета, монтаж, протоколы замеров. Замер бесплатный.">
 <meta name="theme-color" content="#0B0D12">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B0D12'/%3E%3Cpath d='M18.4 4 9 17.6h5.4L12.8 28 23 13.9h-5.6z' fill='%232597F0'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%2348B058' stroke='%23E8EEF5' stroke-width='2'/%3E%3Cpath d='M18.2 5 9.4 18.2h4.9L12.9 27 22.6 14.2h-5.2z' fill='%23121A12'/%3E%3C/svg%3E">
 <!-- DEPLOY STEP: og:url и og:image заменить на абсолютные адреса после публикации -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="Воробьевский Синдикат | Электромонтаж от квартиры до завода">
@@ -89,48 +89,36 @@ img{max-width:100%;display:block}
 }
 .loader[hidden]{display:none}
 .loader.done{opacity:0;visibility:hidden;pointer-events:none}
-.lg{position:relative;width:min(64vmin,520px);aspect-ratio:1}
-.lg-base,.lg-neon,.lg-sweep{position:absolute;inset:0;background-size:contain;background-position:center;background-repeat:no-repeat}
-/* фон логотипа вырезан заливкой от углов, поэтому квадрата на канве нет */
-.lg-base{
-  background-image:url("assets/logo-full.png");
-  opacity:calc(var(--reveal,0) * .96);
-  transform:scale(calc(.955 + .045 * var(--reveal,0)));
-}
-.lg-neon{
-  background-image:url("assets/logo-neon.png");
-  filter:brightness(calc(1.5 + .9 * var(--surge,0))) saturate(1.3)
-         drop-shadow(0 0 8px rgba(111,194,255,.9))
-         drop-shadow(0 0 22px rgba(37,151,240,.8))
-         drop-shadow(0 0 52px rgba(37,151,240,calc(.35 + .45 * var(--surge,0))));
-  /* маска-стирание: неон проявляется по кругу, как ток по петле */
-  -webkit-mask-image:conic-gradient(from -95deg,#000 0turn,#000 var(--draw,0turn),transparent calc(var(--draw,0turn) + .05turn),transparent 1turn);
-  mask-image:conic-gradient(from -95deg,#000 0turn,#000 var(--draw,0turn),transparent calc(var(--draw,0turn) + .05turn),transparent 1turn);
-}
-/* световой пакет: яркая дуга бежит по петле, обрезанная маской неона.
-   Маской служит именно logo-neon.png: CSS берёт из картинки альфа-канал,
-   а у серой маски без альфы он сплошной, и обрезка не срабатывает. */
-.lg-sweep{
-  -webkit-mask-image:url("assets/logo-neon.png");
-  mask-image:url("assets/logo-neon.png");
-  -webkit-mask-size:contain;mask-size:contain;
-  -webkit-mask-position:center;mask-position:center;
-  -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
-  background:conic-gradient(from calc(var(--spin,0) * 1turn - .09turn),
-    transparent 0turn, rgba(111,194,255,.25) .02turn, #EAF6FF .062turn,
-    #FFD9B0 .095turn, rgba(255,178,115,.55) .13turn, transparent .17turn, transparent 1turn);
+.lg{position:relative;width:min(58vmin,420px);aspect-ratio:1}
+/* Знак круглый, поэтому прогресс идёт по кольцу вокруг него.
+   Кольцо делается маской-бубликом: центр прозрачный, край плотный. */
+.lg-base{position:absolute;inset:8%;background-image:url("assets/logo-full.png");
+  background-size:contain;background-position:center;background-repeat:no-repeat;
+  opacity:var(--reveal,0);
+  transform:scale(calc(.9 + .1 * var(--reveal,0)));
+  filter:drop-shadow(0 0 calc(14px + 26px * var(--surge,0)) rgba(96,190,110,calc(.35 + .5 * var(--surge,0))))}
+
+.lg-ring,.lg-head{position:absolute;inset:0;border-radius:50%;
+  -webkit-mask-image:radial-gradient(circle at 50% 50%,transparent 0 46.2%,#000 47.4% 49.6%,transparent 50.4%);
+  mask-image:radial-gradient(circle at 50% 50%,transparent 0 46.2%,#000 47.4% 49.6%,transparent 50.4%)}
+/* пройденная часть кольца */
+.lg-ring{background:conic-gradient(from -90deg,
+  #2F7A3C 0turn,#48B058 calc(var(--draw,0turn) * .55),#80C070 var(--draw,0turn),
+  rgba(128,192,112,.10) var(--draw,0turn),rgba(128,192,112,.10) 1turn);
+  opacity:calc(.35 + .65 * var(--reveal,0))}
+/* яркая голова бежит впереди заливки */
+.lg-head{background:conic-gradient(from calc(-90deg + var(--draw,0turn)),
+  #EAFBE6 0turn,rgba(128,192,112,.5) .02turn,transparent .05turn,transparent 1turn);
   opacity:var(--packet,0);
-  filter:blur(.5px) drop-shadow(0 0 14px rgba(190,230,255,1)) drop-shadow(0 0 34px rgba(120,190,255,.8));
-  mix-blend-mode:screen;
-}
+  filter:blur(.4px) drop-shadow(0 0 12px rgba(150,240,150,.95))}
+
 .lg-cap{
-  position:absolute;left:50%;bottom:-14%;transform:translateX(-50%);
+  position:absolute;left:50%;bottom:-13%;transform:translateX(-50%);
   text-align:center;white-space:nowrap;color:var(--ink-3);
   opacity:calc(var(--reveal,0) * .9);
 }
-.lg-pct{color:var(--blue-hi)}
 @media (prefers-reduced-motion:reduce){
-  .lg-base,.lg-sweep{transition:none}
+  .lg-base{transition:none}
 }
 
 /* ============================================================
@@ -147,7 +135,7 @@ img{max-width:100%;display:block}
 .nav.in{transform:translateY(0)}
 .nav.solid{background:rgba(11,13,18,.82);backdrop-filter:blur(14px) saturate(1.3);border-bottom-color:var(--line)}
 .nav-logo{display:flex;align-items:center;gap:11px;flex:0 0 auto}
-.nav-logo img{width:42px;height:auto}
+.nav-logo img{width:44px;height:44px}
 .nav-logo b{font-family:Onest;font-weight:800;font-size:13.5px;letter-spacing:.05em;line-height:1.15;text-transform:uppercase}
 .nav-logo b i{display:block;font-style:normal;font-size:9.5px;letter-spacing:.28em;color:var(--ink-3);font-family:"JetBrains Mono",monospace;font-weight:400}
 .nav-links{display:flex;gap:var(--sp-3);margin-left:auto;font-size:14.5px;color:var(--ink-2)}
@@ -700,7 +688,7 @@ input[type=range]:focus-visible{outline:2px solid var(--blue-hi);outline-offset:
 footer{border-top:1px solid var(--line);padding:var(--sp-5) 0 var(--sp-4);position:relative;z-index:2;background:transparent}
 .foot{display:flex;gap:var(--sp-4);flex-wrap:wrap;justify-content:space-between;align-items:flex-start}
 .foot-logo{display:flex;align-items:center;gap:12px}
-.foot-logo img{width:52px}
+.foot-logo img{width:56px;height:56px}
 .foot-logo b{font-family:Onest;font-weight:800;font-size:14px;letter-spacing:.05em;text-transform:uppercase;line-height:1.2}
 .foot-logo b i{display:block;font-style:normal;font-size:9.5px;letter-spacing:.26em;color:var(--ink-3);
   font-family:"JetBrains Mono",monospace;font-weight:400;margin-top:3px}
@@ -872,8 +860,8 @@ body.paused *,body.paused *::before,body.paused *::after{animation-play-state:pa
 <div class="loader" id="loader" role="status" aria-live="polite">
   <div class="lg" id="lg">
     <div class="lg-base"></div>
-    <div class="lg-neon"></div>
-    <div class="lg-sweep"></div>
+    <div class="lg-ring"></div>
+    <div class="lg-head"></div>
     <div class="lg-cap mono">Подаём напряжение</div>
   </div>
   <span class="sr">Загрузка сайта Воробьевский Синдикат</span>
@@ -882,7 +870,7 @@ body.paused *,body.paused *::before,body.paused *::after{animation-play-state:pa
 <!-- ШАПКА -->
 <nav class="nav" id="nav" aria-label="Главное меню">
   <a class="nav-logo" href="#top" aria-label="Воробьевский Синдикат, на главную">
-    <img src="assets/logo-mark.png" alt="" width="42" height="37">
+    <img src="assets/logo-mark.png" alt="" width="44" height="44">
     <b>Воробьевский<br>Синдикат<i>Электромонтаж</i></b>
   </a>
   <div class="nav-links">
@@ -1483,7 +1471,7 @@ body.paused *,body.paused *::before,body.paused *::after{animation-play-state:pa
   <div class="wrap">
     <div class="foot">
       <div class="foot-logo">
-        <img src="assets/logo-mark.png" alt="" width="52" height="45">
+        <img src="assets/logo-mark.png" alt="" width="56" height="56">
         <b>Воробьевский Синдикат<i>Электромонтаж</i></b>
       </div>
       <div class="foot-col"><b>Разделы</b>
@@ -1777,11 +1765,8 @@ function paintLoader(reveal, draw){
   lg.style.setProperty("--reveal", reveal.toFixed(3));
   lg.style.setProperty("--draw", draw.toFixed(3) + "turn");
 }
-function spinLoop(){
-  spin = (spin + 0.0138) % 1;
-  if (lg) lg.style.setProperty("--spin", spin.toFixed(4));
-  spinRaf = requestAnimationFrame(spinLoop);
-}
+/* Отдельное вращение не нужно: прогресс сам бежит по кольцу. */
+function spinLoop(){ spinRaf = null; }
 function finishLoader(){
   if (loaderDone) return; loaderDone = true;
   /* вспышка подачи напряжения, потом логотип уходит вверх */
